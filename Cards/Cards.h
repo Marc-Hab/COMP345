@@ -1,6 +1,7 @@
 #define CARDS_H
 
 #include <vector>
+#include <iostream>
 
 enum class CardType {
     BOMB,
@@ -21,6 +22,7 @@ public:
     Card& operator=(const Card& object);
     CardType getType() const;
     void play(Deck* deck, Hand* hand);
+    friend std::ostream& operator<<(std::ostream& outs, const Card& card);
 };
 
 class Deck {
@@ -33,7 +35,10 @@ public:
     Deck(const Deck& object);
     Deck& operator=(const Deck& object);
     ~Deck();
-
+    void addCardToDeck(Card* card);
+    Card* removeCardFromDeck(Card* card);
+    friend std::ostream& operator<<(std::ostream& outs, const Deck& deck);
+    int size();
 };
 
 class Hand {
@@ -44,4 +49,7 @@ public:
     Hand(const Hand& object);
     Hand& operator=(const Hand& object);
     ~Hand();
+    void addCardToHand(Card* card);
+    Card* removeCardFromHand(Card* card);
+    friend std::ostream& operator<<(std::ostream& outs, const Hand& hand);
 };
