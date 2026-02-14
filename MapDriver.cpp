@@ -9,61 +9,72 @@ using namespace std;
 Map* createValidMap() {
     Map* map = new Map();
     
-    // Create continents
+    // Create continents and add to map
     Continent northAmerica = Continent("North America", 5);
     Continent europe = Continent("Europe", 3);
     
-    // Create territories
-    Territory canada    = Territory("Canada");
-    Territory usa       = Territory("USA");
-    Territory mexico    = Territory("Mexico");
-    Territory uk        = Territory("UK");
-    Territory france    = Territory("France");
-    Territory germany   = Territory("Germany");
-    
-    // Set continents
-    canada.setContinent(&northAmerica);
-    usa.setContinent(&northAmerica);
-    mexico.setContinent(&northAmerica);
-    uk.setContinent(&europe);
-    france.setContinent(&europe);
-    germany.setContinent(&europe);
+    map->addContinent(northAmerica);
+    map->addContinent(europe);
 
+    // Get pointers to the continents IN THE MAP (not the local variables)
+    Continent* pNorthAmerica = &(map->getContinents()->at(0));
+    Continent* pEurope = &(map->getContinents()->at(1));
+    
+    // Create territories
+    Territory canada = Territory("Canada");
+    Territory usa = Territory("USA");
+    Territory mexico = Territory("Mexico");
+    Territory uk = Territory("UK");
+    Territory france = Territory("France");
+    Territory germany = Territory("Germany");
+
+    // Set continents BEFORE adding to map
+    canada.setContinent(pNorthAmerica);
+    usa.setContinent(pNorthAmerica);
+    mexico.setContinent(pNorthAmerica);
+    uk.setContinent(pEurope);
+    france.setContinent(pEurope);
+    germany.setContinent(pEurope);
+
+    // Add territories to map (this copies them)
+    map->addTerritory(canada);
+    map->addTerritory(usa);
+    map->addTerritory(mexico);
+    map->addTerritory(uk);
+    map->addTerritory(france);
+    map->addTerritory(germany);
+    
+    // NOW get pointers to the territories IN THE MAP
+    Territory* pCanada = &(map->getTerritories()->at(0));
+    Territory* pUsa = &(map->getTerritories()->at(1));
+    Territory* pMexico = &(map->getTerritories()->at(2));
+    Territory* pUk = &(map->getTerritories()->at(3));
+    Territory* pFrance = &(map->getTerritories()->at(4));
+    Territory* pGermany = &(map->getTerritories()->at(5));
     
     // Add territories to continents
-    northAmerica.addTerritory(&canada);
-    northAmerica.addTerritory(&usa);
-    northAmerica.addTerritory(&mexico);
-    europe.addTerritory(&uk);
-    europe.addTerritory(&france);
-    europe.addTerritory(&germany);
+    pNorthAmerica->addTerritory(pCanada);
+    pNorthAmerica->addTerritory(pUsa);
+    pNorthAmerica->addTerritory(pMexico);
+    pEurope->addTerritory(pUk);
+    pEurope->addTerritory(pFrance);
+    pEurope->addTerritory(pGermany);
     
     // Create adjacencies within North America (connected subgraph)
-    canada.addAdjacentTerritory(&usa);
-    usa.addAdjacentTerritory(&canada);
-    usa.addAdjacentTerritory(&mexico);
-    mexico.addAdjacentTerritory(&usa);
+    pCanada->addAdjacentTerritory(pUsa);
+    pUsa->addAdjacentTerritory(pCanada);
+    pUsa->addAdjacentTerritory(pMexico);
+    pMexico->addAdjacentTerritory(pUsa);
     
     // Create adjacencies within Europe (connected subgraph)
-    uk.addAdjacentTerritory(&france);
-    france.addAdjacentTerritory(&uk);
-    france.addAdjacentTerritory(&germany);
-    germany.addAdjacentTerritory(&france);
+    pUk->addAdjacentTerritory(pFrance);
+    pFrance->addAdjacentTerritory(pUk);
+    pFrance->addAdjacentTerritory(pGermany);
+    pGermany->addAdjacentTerritory(pFrance);
     
     // Connect continents to make the whole map connected
-    uk.addAdjacentTerritory(&canada);
-    canada.addAdjacentTerritory(&uk);
-
-    // Add territories to map
-    map->addTerritory(canada);  // Index 0
-    map->addTerritory(usa);     // Index 1
-    map->addTerritory(mexico);  // Index 2
-    map->addTerritory(uk);      // Index 3
-    map->addTerritory(france);  // Index 4
-    map->addTerritory(germany); // Index 5
-
-    map->addContinent(northAmerica); // Index 0
-    map->addContinent(europe);       // Index 1
+    pUk->addAdjacentTerritory(pCanada);
+    pCanada->addAdjacentTerritory(pUk);
     
     return map;
 }
@@ -80,31 +91,39 @@ Map* createInvalidMapDisconnected() {
     map->addContinent(continent1);
     map->addContinent(continent2);
     
+    Continent* pCont1 = &(map->getContinents()->at(0));
+    Continent* pCont2 = &(map->getContinents()->at(1));
+    
     Territory t1 = Territory("T1");
     Territory t2 = Territory("T2");
     Territory t3 = Territory("T3");
     Territory t4 = Territory("T4");
+
+    t1.setContinent(pCont1);
+    t2.setContinent(pCont1);
+    t3.setContinent(pCont2);
+    t4.setContinent(pCont2);
 
     map->addTerritory(t1);
     map->addTerritory(t2);
     map->addTerritory(t3);
     map->addTerritory(t4);
     
-    t1.setContinent(&continent1);
-    t2.setContinent(&continent1);
-    t3.setContinent(&continent2);
-    t4.setContinent(&continent2);
+    Territory* pT1 = &(map->getTerritories()->at(0));
+    Territory* pT2 = &(map->getTerritories()->at(1));
+    Territory* pT3 = &(map->getTerritories()->at(2));
+    Territory* pT4 = &(map->getTerritories()->at(3));
     
-    continent1.addTerritory(&t1);
-    continent1.addTerritory(&t2);
-    continent2.addTerritory(&t3);
-    continent2.addTerritory(&t4);
+    pCont1->addTerritory(pT1);
+    pCont1->addTerritory(pT2);
+    pCont2->addTerritory(pT3);
+    pCont2->addTerritory(pT4);
     
     // Connect within continents but NOT between them
-    t1.addAdjacentTerritory(&t2);
-    t2.addAdjacentTerritory(&t1);
-    t3.addAdjacentTerritory(&t4);
-    t4.addAdjacentTerritory(&t3);
+    pT1->addAdjacentTerritory(pT2);
+    pT2->addAdjacentTerritory(pT1);
+    pT3->addAdjacentTerritory(pT4);
+    pT4->addAdjacentTerritory(pT3);
     
     return map;
 }
@@ -118,25 +137,31 @@ Map* createInvalidMapContinentDisconnected() {
     Continent continent = Continent("Continent", 5);
     map->addContinent(continent);
     
+    Continent* pCont = &(map->getContinents()->at(0));
+    
     Territory t1 = Territory("T1");
     Territory t2 = Territory("T2");
     Territory t3 = Territory("T3");
+
+    t1.setContinent(pCont);
+    t2.setContinent(pCont);
+    t3.setContinent(pCont);
 
     map->addTerritory(t1);
     map->addTerritory(t2);
     map->addTerritory(t3);
     
-    t1.setContinent(&continent);
-    t2.setContinent(&continent);
-    t3.setContinent(&continent);
+    Territory* pT1 = &(map->getTerritories()->at(0));
+    Territory* pT2 = &(map->getTerritories()->at(1));
+    Territory* pT3 = &(map->getTerritories()->at(2));
     
-    continent.addTerritory(&t1);
-    continent.addTerritory(&t2);
-    continent.addTerritory(&t3);
+    pCont->addTerritory(pT1);
+    pCont->addTerritory(pT2);
+    pCont->addTerritory(pT3);
     
     // T1 and T2 connected, but T3 isolated within the continent
-    t1.addAdjacentTerritory(&t2);
-    t2.addAdjacentTerritory(&t1);
+    pT1->addAdjacentTerritory(pT2);
+    pT2->addAdjacentTerritory(pT1);
     // T3 has no adjacencies within its continent
     
     return map;
@@ -154,22 +179,28 @@ Map* createInvalidMapMultipleContinents() {
     map->addContinent(continent1);
     map->addContinent(continent2);
     
+    Continent* pCont1 = &(map->getContinents()->at(0));
+    Continent* pCont2 = &(map->getContinents()->at(1));
+    
     Territory t1 = Territory("T1");
     Territory t2 = Territory("T2");
+
+    t1.setContinent(pCont1);
+    t2.setContinent(pCont2);
 
     map->addTerritory(t1);
     map->addTerritory(t2);
     
+    Territory* pT1 = &(map->getTerritories()->at(0));
+    Territory* pT2 = &(map->getTerritories()->at(1));
+    
     // Territory belongs to both continents (invalid)
-    t1.setContinent(&continent1);
-    continent1.addTerritory(&t1);
-    continent2.addTerritory(&t1); // Added to second continent too
+    pCont1->addTerritory(pT1);
+    pCont2->addTerritory(pT1); // Added to second continent too
+    pCont2->addTerritory(pT2);
     
-    t2.setContinent(&continent2);
-    continent2.addTerritory(&t2);
-    
-    t1.addAdjacentTerritory(&t2);
-    t2.addAdjacentTerritory(&t1);
+    pT1->addAdjacentTerritory(pT2);
+    pT2->addAdjacentTerritory(pT1);
     
     return map;
 }

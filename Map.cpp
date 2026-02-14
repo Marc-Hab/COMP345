@@ -92,7 +92,7 @@ std::ostream& operator<<(std::ostream& out, const Territory& territory) {
     if (territory.adjacentTerritories) {
         for (size_t i = 0; i < territory.adjacentTerritories->size(); ++i) {
             const Territory* adj = territory.adjacentTerritories->at(i);
-            out << "\"" << adj->name << "\"";
+            out << "\"" << *(adj->name) << "\"";
 
             if (i != territory.adjacentTerritories->size() - 1) {
                 out << ",";
@@ -358,16 +358,14 @@ bool Map::isConnectedGraph() const {
         return true;
     }
 
-
-    // Convert Territories to references to match the method signature 
-    std::vector<Territory*> territoriesRefs{};
-
-    for (Territory territory : *territories){
+    // Create a vector of pointers to territories in the map
+    std::vector<Territory*> territoriesRefs;
+    for (Territory& territory : *territories){
         territoriesRefs.push_back(&territory);
     }
 
     std::vector<bool> visited(territories->size(), false);
-    dfsVisit(&territories->at(0), visited, territoriesRefs);
+    dfsVisit(&(territories->at(0)), visited, territoriesRefs);
 
     // Check if all territories were visited
     for (bool v : visited) {
@@ -532,13 +530,21 @@ Map* MapLoader::loadMap(const std::string& filePath) {
             iss >> id >> name >> continentId;
             
             Territory territory(name);
+            
+            // Set continent BEFORE adding to map (continentId is 1-based)
+            if (continentId > 0 && continentId <= (int)map->getContinents()->size()) {
+                Continent* cont = &(map->getContinents()->at(continentId - 1));
+                territory.setContinent(cont);
+            }
+            
+            // Add territory to map (this copies it)
             map->addTerritory(territory);
             
-            // Set continent (continentId is 1-based)
+            // Now add the territory IN THE MAP to the continent's list
             if (continentId > 0 && continentId <= (int)map->getContinents()->size()) {
-                Continent* cont = &map->getContinents()->at(continentId - 1);
-                territory.setContinent(cont);
-                cont->addTerritory(&territory);
+                Continent* cont = &(map->getContinents()->at(continentId - 1));
+                Territory* territoryInMap = &(map->getTerritories()->at(map->getTerritories()->size() - 1));
+                cont->addTerritory(territoryInMap);
             }
 
         } else if (section == Section::BORDERS) {
@@ -548,14 +554,14 @@ Map* MapLoader::loadMap(const std::string& filePath) {
             
             // Get the territory based on the id 
             if (territoryId > 0 && territoryId <= (int)map->getTerritories()->size()) {
-                Territory* territory = &map->getTerritories()->at(territoryId - 1);
+                Territory* territory = &(map->getTerritories()->at(territoryId - 1));
                 
                 // Add all adjacent territories based on their ids
                 int adjacentId;
                 while (iss >> adjacentId) {
                     if (adjacentId > 0 && adjacentId <= (int)map->getTerritories()->size()) {
-                        Territory adjacent = map->getTerritories()->at(adjacentId - 1);
-                        territory->addAdjacentTerritory(&adjacent);
+                        Territory* adjacent = &(map->getTerritories()->at(adjacentId - 1));
+                        territory->addAdjacentTerritory(adjacent);
                     }
                 }
             }
