@@ -1,21 +1,28 @@
 #include "Cards.h"
+#include "../Orders/Orders.h"
 
-void Card::play( Deck* deck, Hand* hand) {
+Order* Card::play( Deck* deck, Hand* hand) {
+    Order* order = nullptr;
     switch (*type) {
         case CardType::BOMB:
             std::cout << "Making Bomb order" << std::endl;
+            order = new Bomb();
             break;
         case CardType::REINFORCEMENT:
-            std::cout << "Making Reinforcement order" << std::endl;
+            std::cout << "Making Reinforcement order (Deploy)" << std::endl;
+            order = new Deploy();
             break;
         case CardType::BLOCKADE:
             std::cout << "Making Blockade order" << std::endl;
+            order = new Blockade();
             break;
         case CardType::AIRLIFT:
             std::cout << "Making Airlift order" << std::endl;
+            order = new Airlift();
             break;
         case CardType::DIPLOMACY:
-            std::cout << "Making Diplomacy order" << std::endl;
+            std::cout << "Making Diplomacy order (Negotiate)" << std::endl;
+            order = new Negotiate();
             break;
     }
     
@@ -25,6 +32,7 @@ void Card::play( Deck* deck, Hand* hand) {
         deck->addCardToDeck(removedCard);
         std::cout << "Card removed from hand and readded to deck" << std::endl;
     };
+    return order;
 }
 
 void Deck::draw(Hand* hand) {

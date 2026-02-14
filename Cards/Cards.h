@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iostream>
+#include "../Orders/Orders.h"
 
 class Deck;
 class Hand;
@@ -24,7 +25,7 @@ public:
     Card(const Card& object);
     ~Card();
     Card& operator=(const Card& object);
-    void play(Deck* deck, Hand* hand);
+    Order* play(Deck* deck, Hand* hand);
     friend std::ostream& operator<<(std::ostream& outs, const Card& card);
 };
 
