@@ -5,17 +5,8 @@
 #include <vector>
 
 
-
-#include <iostream>
-
-
-// Forward declarations
-class Player{
-public:
-    Player(const Player& other);
-    std::string getName() const{return"";};
-    friend std::ostream& operator<<(std::ostream& out, const Player& territory){out << "{}"; return out;}
-};
+// FORWARD DECLARATIONS
+class Player;
 class Territory;
 class Continent;
 

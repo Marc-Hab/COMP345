@@ -2,9 +2,11 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include "Map.h"
-#include "Orders.h"
-#include "Cards.h"
+
+// FORWARD DECLARATIONS
+class Territory;
+class Hand;
+class OrdersList;
 
 class Player {
 private:
@@ -28,6 +30,7 @@ public:
 
     // Getters
     std::string getName() const;
+    OrdersList* getOrders() const;
 
     // Operator Overload
     friend std::ostream& operator<<(std::ostream& out, const Player& p);

@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "../Maps/Map.h"
 #include <iostream>
 using namespace std;
 
@@ -10,8 +11,8 @@ int main() {
     cout << p1 << endl;
 
     // Add sample territories
-    Territory* t1 = new Territory("Canada", 5);
-    Territory* t2 = new Territory("USA", 3);
+    Territory* t1 = new Territory("Canada");
+    Territory* t2 = new Territory("USA");
     vector<Territory*> defendList = p1.toDefend();
     vector<Territory*> attackList = p1.toAttack();
 

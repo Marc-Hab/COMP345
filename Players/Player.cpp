@@ -1,4 +1,9 @@
 #include "Player.h"
+#include "../Maps/Map.h"
+#include "../Orders/Orders.h"
+#include "../Cards/Cards.h"
+
+
 using namespace std;
 
 Player::Player() {
@@ -56,13 +61,19 @@ vector<Territory*> Player::toAttack() const {
 
 void Player::issueOrder() {
     cout << *name << " is issuing an order..." << endl;
-    Order* newOrder = new Order();
+    
+    Order* newOrder = new Bomb();
+
     ordersList->addOrder(newOrder);
 }
 
 string Player::getName() const {
     return *name;
 }
+
+OrdersList* Player::getOrders() const{
+    return ordersList;
+};
 
 ostream& operator<<(ostream& out, const Player& p) {
     out << "Player: " << *p.name

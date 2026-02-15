@@ -8,7 +8,9 @@
 #include <string>
 #include <vector>
 
-class Order;
+// FORWARD DECLARATIONS
+class Player;
+class Territory;
 
 // Base class for all orders
 class Order {
@@ -123,6 +125,7 @@ public:
     void remove(int index);
     void move(int fromIndex, int toIndex);
     void executeAll();
+    int size() const;
 
 private:
     // This is a pointer to a vector of Order pointers, as per the assignment requirements.

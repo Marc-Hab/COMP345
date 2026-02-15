@@ -180,6 +180,10 @@ void OrdersList::executeAll() {
     }
 }
 
+int OrdersList::size() const {
+    return orders->size();
+}
+
 std::ostream& operator<<(std::ostream& os, const OrdersList& list) {
     os << "--- Orders List ---\n";
     if (list.orders->empty()) {

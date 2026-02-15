@@ -2,9 +2,12 @@
 #define CARDS_H
 
 #include <vector>
+#include <deque>
 #include <iostream>
-#include "../Orders/Orders.h"
 
+// FORWARD DECLARATIONS
+class Player;
+class Order;
 class Deck;
 class Hand;
 
@@ -19,44 +22,70 @@ enum class CardType {
 class Card {
 private:
     CardType* type;
+
 public:
-    Card();
+    // Constructors and Destructor
     Card(CardType cardType);
     Card(const Card& object);
     ~Card();
+
+    // Assignment and stream insertion operators
     Card& operator=(const Card& object);
-    Order* play(Deck* deck, Hand* hand);
     friend std::ostream& operator<<(std::ostream& outs, const Card& card);
-};
-
-class Deck {
-private:
-    std::vector<Card*>* deck;
-
-public:
-    void draw(Hand* hand);
-    Deck();
-    Deck(const Deck& object);
-    Deck& operator=(const Deck& object);
-    ~Deck();
-    void addCardToDeck(Card* card);
-    Card* removeCardFromDeck(Card* card);
-    friend std::ostream& operator<<(std::ostream& outs, const Deck& deck);
+    
+    void play(Deck* deck, Hand* hand);
+    
+    // Getter
+    CardType getType() const;
 };
 
 class Hand {
 private:
-    std::vector<Card*>* hand;
+    std::vector<Card*>* cards;
+    Player* player;
 public:
+    // Constructors and Destructor
     Hand();
     Hand(const Hand& object);
-    Hand& operator=(const Hand& object);
     ~Hand();
-    void addCardToHand(Card* card);
-    Card* removeCardFromHand(Card* card);
+    
+    // Assignment and stream insertion operators
+    Hand& operator=(const Hand& object);
     friend std::ostream& operator<<(std::ostream& outs, const Hand& hand);
-    Card* getCard(int index);
-    std::vector<Card*>* getHand();
+
+
+    void addCard(Card* card);
+    Card* removeCard(Card* card);
+
+    // Getters and setters
+    std::vector<Card*>* getCards() const;
+    Player* getPlayer() const;
+
+    void setPlayer(Player* p);
+
+};
+
+class Deck {
+private:
+    std::deque<Card*>* cards;
+
+public:
+    // Constructors and Destructor
+    Deck();
+    Deck(const Deck& object);
+    ~Deck();
+
+    // Assignment and stream insertion operators
+    Deck& operator=(const Deck& object);
+    friend std::ostream& operator<<(std::ostream& outs, const Deck& deck);
+    
+
+    void shuffle();
+    Card* draw(Hand* hand);
+
+    void addCard(Card* card);
+
+    std::deque<Card*>* getCards() const;
 };
 
 #endif
