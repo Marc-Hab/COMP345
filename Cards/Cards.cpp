@@ -77,6 +77,8 @@ CardType Card::getType() const {
 
 void Card::play(Deck* deck, Hand* hand) {
 
+    if (hand->getPlayer() == nullptr ){ return; }
+
     // Remove card from hand 
     Card* removedCard = hand->removeCard(this);
 
@@ -87,23 +89,18 @@ void Card::play(Deck* deck, Hand* hand) {
 
     switch (*type) {
         case CardType::BOMB:
-            std::cout << "Making Bomb order" << std::endl;
             newOrder = new Bomb();
             break;
         case CardType::REINFORCEMENT:
-            std::cout << "Making Reinforcement order (Deploy)" << std::endl;
             newOrder = new Deploy();
             break;
         case CardType::BLOCKADE:
-            std::cout << "Making Blockade order" << std::endl;
             newOrder = new Blockade();
             break;
         case CardType::AIRLIFT:
-            std::cout << "Making Airlift order" << std::endl;
             newOrder = new Airlift();
             break;
         case CardType::DIPLOMACY:
-            std::cout << "Making Diplomacy order (Negotiate)" << std::endl;
             newOrder = new Negotiate();
             break;
     }
@@ -113,7 +110,6 @@ void Card::play(Deck* deck, Hand* hand) {
     
     // Add card back to deck
     deck->addCard(removedCard);
-    std::cout << "Card removed from hand and readded to deck" << std::endl;
 }
 
 

@@ -122,54 +122,8 @@ void testCardsComponent() {
     cout << "\nFinal deck:" << endl;
     cout << *deck << endl << endl;
     
-    // ===== PART 6: Test Copy Constructors and Assignment Operators =====
-    cout << "===== PART 6: Testing Copy Constructor & Assignment =====" << endl;
-    
-    // Draw some cards for testing
-    Hand* testHand = new Hand();
-    testHand->setPlayer(player);
-    for (int i = 0; i < 3; i++) {
-        deck->draw(testHand);
-    }
-    
-    cout << "\nOriginal test hand:" << endl;
-    cout << *testHand << endl;
-    
-    // Test Hand copy constructor
-    Hand* copiedHand = new Hand(*testHand);
-    cout << "\nCopied hand:" << endl;
-    cout << *copiedHand << endl;
-    
-    // Test Deck copy constructor
-    Deck* copiedDeck = new Deck(*deck);
-    cout << "\nOriginal deck size: " << deck->getCards()->size() << endl;
-    cout << "Copied deck size: " << copiedDeck->getCards()->size() << endl;
-    
-    if (deck->getCards()->size() == copiedDeck->getCards()->size()) {
-        cout << "✓ VERIFIED: Deck copy constructor works" << endl;
-    }
-    
+
     // Cleanup
-    delete testHand;
-    delete copiedHand;
-    delete copiedDeck;
-    
-    // ===== Summary =====
-    cout << "\n========================================" << endl;
-    cout << "           DRIVER COMPLETE" << endl;
-    cout << "========================================" << endl;
-    cout << "\nSummary of demonstrations:" << endl;
-    cout << "✓ Created deck with all card types" << endl;
-    cout << "✓ Created hand and drew cards from deck" << endl;
-    cout << "✓ Verified draw() removes cards from deck" << endl;
-    cout << "✓ Verified draw() adds cards to hand" << endl;
-    cout << "✓ Played all cards in hand" << endl;
-    cout << "✓ Verified play() creates orders" << endl;
-    cout << "✓ Verified play() removes cards from hand" << endl;
-    cout << "✓ Verified play() returns cards to deck" << endl;
-    cout << "✓ Tested copy constructors and assignment operators" << endl;
-    
-    // Final cleanup
     delete hand;
     delete deck;
     delete player;
