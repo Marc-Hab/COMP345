@@ -567,6 +567,7 @@ std::tuple<int, int> MapLoader::countContinentsAndCountries(const std::string& f
             continue;
         }
 
+        // Increment counters
         if (section == Section::CONTINENTS){
             ++continentsCount;
         } else if (section == Section::COUNTRIES) {

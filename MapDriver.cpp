@@ -260,8 +260,8 @@ int main() {
     cout << "Overall validation result: " << (isValid3 ? "VALID" : "INVALID") << endl;
     cout << endl;
     
-    // Test 5: MapLoader with file (would fail if file doesn't exist)
-    cout << "TEST 5: Testing MapLoader" << endl;
+    // Test 5: MapLoader with valid file
+    cout << "TEST 5: Testing MapLoader with valid file" << endl;
     cout << "-------------------------" << endl;
     MapLoader& loader = MapLoader::getInstance();
     cout << loader << endl;
@@ -275,15 +275,18 @@ int main() {
     }
     cout << endl;
     
-    // Test 6: Copy constructor and assignment operator
-    cout << "TEST 6: Testing copy constructor and assignment operator" << endl;
-    cout << "---------------------------------------------------------" << endl;
-    Map* copiedMap = new Map(*validMap);
-    cout << "Copied map: " << *copiedMap << endl;
-    
-    Map* assignedMap = new Map();
-    *assignedMap = *validMap;
-    cout << "Assigned map: " << *assignedMap << endl;
+    // Test 6: MapLoader with invalid file (continents not connected)
+    cout << "TEST 6: Testing MapLoader with invalid file" << endl;
+    cout << "-------------------------" << endl;
+    cout << loader << endl;
+    loadedMap = loader.loadMap("map files/austria.map");
+    if (loadedMap) {
+        cout << "Map loaded successfully" << endl;
+        loadedMap->validate();
+        delete loadedMap;
+    } else {
+        cout << "Failed to load map (file may not exist)" << endl;
+    }
     cout << endl;
     
     // Cleanup
@@ -291,8 +294,6 @@ int main() {
     delete invalidMap1;
     delete invalidMap2;
     delete invalidMap3;
-    delete copiedMap;
-    delete assignedMap;
     
     cout << "===== MAP DRIVER COMPLETE =====" << endl;
     
