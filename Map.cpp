@@ -518,6 +518,69 @@ std::ostream& operator<<(std::ostream& out, const MapLoader& loader) {
     return out;
 }
 
+/** 
+ * Count the number of continents and countries in a map file 
+ */
+std::tuple<int, int> MapLoader::countContinentsAndCountries(const std::string& filePath){
+    int continentsCount = 0;
+    int countriesCount = 0;
+
+    std::ifstream file(filePath);
+    
+    if (!file.is_open()) {
+        std::cerr << "Error: Cannot open file " << filePath << std::endl;
+        return {0, 0};
+    }
+
+    enum class Section {
+        CONTINENTS,
+        COUNTRIES,
+        BORDERS,
+        OTHER
+    };
+
+    std::string line;
+    Section section = Section::OTHER;
+
+    while (std::getline(file, line)) {
+        // Trim whitespace
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
+
+        // Skip empty lines and comments
+        if (line.empty() || line[0] == ';') {
+            continue;
+        }
+
+        // Check for section headers
+        if (line == "[continents]") {
+            section = Section::CONTINENTS;
+            continue;
+        } else if (line == "[countries]" || line == "[territories]") {
+            section = Section::COUNTRIES;
+            continue;
+        } else if (line == "[borders]") {
+            section = Section::BORDERS;
+            continue;
+        } else if (line.front() == '[' && line.back() == ']') {
+            section = Section::OTHER;
+            continue;
+        }
+
+        if (section == Section::CONTINENTS){
+            ++continentsCount;
+        } else if (section == Section::COUNTRIES) {
+            ++countriesCount;
+        }
+
+
+    }
+
+    file.close();
+
+    return {continentsCount, countriesCount};
+}
+
 
 /**
  * Load a map from file
@@ -532,6 +595,17 @@ Map* MapLoader::loadMap(const std::string& filePath) {
     }
 
     Map* map = new Map();
+
+    // Count the exact number of continents and countries
+    std::tuple<int, int> continentsAndCountriesCounts = countContinentsAndCountries(filePath);
+
+    int continentCount = std::get<0>(continentsAndCountriesCounts);
+    int territoryCount = std::get<1>(continentsAndCountriesCounts);
+
+    // Reserve the exact amount needed to prevent reallocation
+    map->getContinents()->reserve(continentCount);
+    map->getTerritories()->reserve(territoryCount);
+
 
     enum class Section {
         CONTINENTS,
@@ -595,7 +669,7 @@ Map* MapLoader::loadMap(const std::string& filePath) {
                 territory.setContinent(cont);
             }
             
-            // Add territory to map (this copies it)
+            // Add territory to map
             map->addTerritory(territory);
             
             // Now add the territory IN THE MAP to the continent's list

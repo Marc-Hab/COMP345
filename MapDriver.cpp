@@ -8,6 +8,10 @@ using namespace std;
  */
 Map* createValidMap() {
     Map* map = new Map();
+
+    // Reserving to prevent reallocation
+    map->getContinents()->reserve(2);
+    map->getTerritories()->reserve(6);
     
     // Create continents and add to map
     Continent northAmerica = Continent("North America", 5);
@@ -84,6 +88,10 @@ Map* createValidMap() {
  */
 Map* createInvalidMapDisconnected() {
     Map* map = new Map();
+
+    // Reserving to prevent reallocation
+    map->getContinents()->reserve(2);
+    map->getTerritories()->reserve(4);
     
     Continent continent1 = Continent("Continent1", 5);
     Continent continent2 = Continent("Continent2", 3);
@@ -133,6 +141,10 @@ Map* createInvalidMapDisconnected() {
  */
 Map* createInvalidMapContinentDisconnected() {
     Map* map = new Map();
+
+    // Reserving to prevent reallocation
+    map->getContinents()->reserve(1);
+    map->getTerritories()->reserve(3);
     
     Continent continent = Continent("Continent", 5);
     map->addContinent(continent);
@@ -172,6 +184,10 @@ Map* createInvalidMapContinentDisconnected() {
  */
 Map* createInvalidMapMultipleContinents() {
     Map* map = new Map();
+
+    // Reserving to prevent reallocation
+    map->getContinents()->reserve(2);
+    map->getTerritories()->reserve(2);
     
     Continent continent1 = Continent("Continent1", 5);
     Continent continent2 = Continent("Continent2", 3);
@@ -249,7 +265,7 @@ int main() {
     cout << "-------------------------" << endl;
     MapLoader& loader = MapLoader::getInstance();
     cout << loader << endl;
-    Map* loadedMap = loader.loadMap("test.map");
+    Map* loadedMap = loader.loadMap("map files/canada.map");
     if (loadedMap) {
         cout << "Map loaded successfully" << endl;
         loadedMap->validate();

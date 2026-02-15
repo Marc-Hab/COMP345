@@ -146,6 +146,9 @@ private:
     //Private constructor
     MapLoader() {}
 
+    // Helper method for loadMap
+    std::tuple<int, int> countContinentsAndCountries(const std::string& filePath);
+
 public:
 
     static MapLoader& getInstance(){
