@@ -57,7 +57,7 @@ void testPlayerComponent() {
         cout << "  - " << t->getName() << endl;
     }
     
-    cout << "\n✓ VERIFIED: Players store list of owned territories" << endl << endl;
+        cout << "\nPlayers store list of owned territories" << endl << endl;
     
     // ===== PART 3: Demonstrate toDefend() Returns List of Territories =====
     cout << "===== PART 3: Demonstrate toDefend() Method =====" << endl;
@@ -78,7 +78,7 @@ void testPlayerComponent() {
         cout << "  - " << t->getName() << endl;
     }
     
-    cout << "\n✓ VERIFIED: toDefend() can be called and returns list of territories" << endl << endl;
+        cout << "\ntoDefend() can be called and returns list of territories" << endl << endl;
     
     // ===== PART 4: Demonstrate toAttack() Returns List of Territories =====
     cout << "===== PART 4: Demonstrate toAttack() Method =====" << endl;
@@ -103,7 +103,7 @@ void testPlayerComponent() {
         cout << "  (empty list - this is expected for now)" << endl;
     }
     
-    cout << "\n✓ VERIFIED: toAttack() can be called and returns list of territories" << endl << endl;
+        cout << "\ntoAttack() can be called and returns list of territories" << endl << endl;
     
     // ===== PART 5: Demonstrate Player Stores Hand of Cards =====
     cout << "===== PART 5: Player Stores Hand of Cards =====" << endl;
@@ -126,7 +126,7 @@ void testPlayerComponent() {
     cout << "\n" << player2->getName() << "'s hand:" << endl;
     cout << *(player2->getHand()) << endl;
     
-    cout << "✓ VERIFIED: Players store hand of cards" << endl << endl;
+        cout << "Players store hand of cards" << endl << endl;
     
     // ===== PART 6: Demonstrate issueOrder() Creates and Adds Orders =====
     cout << "===== PART 6: Demonstrate issueOrder() Method =====" << endl;
@@ -143,9 +143,9 @@ void testPlayerComponent() {
     cout << *(player1->getOrders()) << endl;
     
     if (player1->getOrders()->size() == 3) {
-        cout << "✓ VERIFIED: issueOrder() creates orders and adds them to player's list" << endl;
+            cout << "issueOrder() creates orders and adds them to player's list" << endl;
     } else {
-        cout << "✗ ERROR: Wrong number of orders" << endl;
+            cout << "ERROR: Wrong number of orders" << endl;
     }
     
     cout << "\nCalling issueOrder() for " << player2->getName() << " (2 times)..." << endl;
