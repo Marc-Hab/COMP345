@@ -10,9 +10,6 @@
 
 class Order;
 
-
-std::ostream& operator<<(std::ostream& os, const Order& order);// Function for printing an order
-
 // Base class for all orders
 class Order {
 public:
