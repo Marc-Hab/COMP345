@@ -122,7 +122,7 @@ std::string GameEngine::commandToString(Command c) {
 }
 
 // ---------- GameEngine public ----------
-GameEngine::GameEngine() : state(nullptr) {
+GameEngine::GameEngine() {
     state = new GameState(GameState::Start);
     buildCommandLookup();
     buildTransitions();
