@@ -14,13 +14,13 @@ void testCardsComponent() {
     cout << "========================================" << endl << endl;
     
     // ===== PART 1: Create a Deck of Cards =====
-    cout << "===== PART 1: Creating Deck =====" << endl;
+    cout << "PART 1: Creating Deck" << endl;
     Deck* deck = new Deck();
     cout << "\nDeck created with all card types:" << endl;
     cout << *deck << endl << endl;
     
     // ===== PART 2: Create a Hand and Draw Cards =====
-    cout << "===== PART 2: Drawing Cards from Deck =====" << endl;
+    cout << "PART 2: Drawing Cards from Deck" << endl;
     
     // Create a player (hand needs to be associated with a player)
     Player* player = new Player("Alice");
@@ -45,7 +45,7 @@ void testCardsComponent() {
     cout << *deck << endl << endl;
     
     // ===== PART 3: Demonstrate draw() removes cards from deck =====
-    cout << "===== PART 3: Verify Cards Removed from Deck =====" << endl;
+    cout << "PART 3: Verify Cards Removed from Deck" << endl;
     
     int initialDeckSize = deck->getCards()->size();
     cout << "Deck size before draw: " << initialDeckSize << endl;
@@ -56,15 +56,15 @@ void testCardsComponent() {
     cout << "Deck size after draw: " << newDeckSize << endl;
     
     if (newDeckSize == initialDeckSize - 1) {
-        cout << "✓ VERIFIED: Card successfully removed from deck" << endl;
+        cout << "Card successfully removed from deck" << endl;
     } else {
-        cout << "✗ ERROR: Deck size didn't decrease properly" << endl;
+        cout << "ERROR: Deck size didn't decrease properly" << endl;
     }
     
     cout << "\nHand now has " << hand->getCards()->size() << " cards" << endl << endl;
     
     // ===== PART 4: Play All Cards in Hand =====
-    cout << "===== PART 4: Playing All Cards in Hand =====" << endl;
+    cout << "PART 4: Playing All Cards in Hand" << endl;
     
     cout << "\nCurrent hand:" << endl;
     cout << *hand << endl;
@@ -90,33 +90,33 @@ void testCardsComponent() {
     cout << "----------------------------------------" << endl << endl;
     
     // ===== PART 5: Verify Results After Playing Cards =====
-    cout << "===== PART 5: Verification After Playing Cards =====" << endl;
+    cout << "PART 5: Verification After Playing Cards" << endl;
     
     cout << "\nHand after playing all cards (should be empty):" << endl;
     cout << *hand << endl;
     
     if (hand->getCards()->empty()) {
-        cout << "✓ VERIFIED: All cards removed from hand" << endl;
+        cout << "All cards removed from hand" << endl;
     } else {
-        cout << "✗ ERROR: Hand still contains cards" << endl;
+        cout << "ERROR: Hand still contains cards" << endl;
     }
     
     cout << "\nPlayer's orders after playing cards:" << endl;
     cout << *(player->getOrders()) << endl;
     
     if (player->getOrders()->size() == cardsToPlay) {
-        cout << "✓ VERIFIED: " << cardsToPlay << " orders created" << endl;
+        cout << cardsToPlay << " orders created" << endl;
     } else {
-        cout << "✗ ERROR: Wrong number of orders created" << endl;
+        cout << "ERROR: Wrong number of orders created" << endl;
     }
     
     int deckSizeAfterPlay = deck->getCards()->size();
     cout << "\nDeck size after playing cards: " << deckSizeAfterPlay << endl;
     
     if (deckSizeAfterPlay == deckSizeBeforePlay + cardsToPlay) {
-        cout << "✓ VERIFIED: All " << cardsToPlay << " cards returned to deck" << endl;
+        cout << "All " << cardsToPlay << " cards returned to deck" << endl;
     } else {
-        cout << "✗ ERROR: Cards not properly returned to deck" << endl;
+        cout << "ERROR: Cards not properly returned to deck" << endl;
     }
     
     cout << "\nFinal deck:" << endl;
