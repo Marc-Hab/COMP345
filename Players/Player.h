@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PLAYER_H
+#define PLAYER_H
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -17,7 +19,6 @@ private:
 
 public:
     // Constructors, destructor, operator overloads
-    Player();
     Player(std::string playerName);
     Player(const Player& other);
     Player& operator=(const Player& other);
@@ -31,7 +32,11 @@ public:
     // Getters
     std::string getName() const;
     OrdersList* getOrders() const;
+    std::vector<Territory*>* getTerritoriesOwned() const;
+    Hand* getHand() const;
 
     // Operator Overload
     friend std::ostream& operator<<(std::ostream& out, const Player& p);
 };
+
+#endif

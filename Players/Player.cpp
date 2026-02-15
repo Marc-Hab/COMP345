@@ -6,13 +6,10 @@
 
 using namespace std;
 
-Player::Player() {
-    name = new string("Unnamed");
-    territoriesOwned = new vector<Territory*>();
-    hand = new Hand();
-    ordersList = new OrdersList();
-}
 
+/*
+ * Constructor
+ */
 Player::Player(string playerName) {
     name = new string(playerName);
     territoriesOwned = new vector<Territory*>();
@@ -20,6 +17,9 @@ Player::Player(string playerName) {
     ordersList = new OrdersList();
 }
 
+/*
+ * Copy constructor
+ */
 Player::Player(const Player& other) {
     name = new string(*other.name);
     territoriesOwned = new vector<Territory*>(*other.territoriesOwned);
@@ -27,6 +27,10 @@ Player::Player(const Player& other) {
     ordersList = new OrdersList(*other.ordersList);
 }
 
+
+/*
+ * Assignment Operator
+ */
 Player& Player::operator=(const Player& other) {
     if (this != &other) {
         delete name;
@@ -42,6 +46,9 @@ Player& Player::operator=(const Player& other) {
     return *this;
 }
 
+/*
+ * Destructor
+ */
 Player::~Player() {
     delete name;
     delete territoriesOwned;
@@ -49,16 +56,26 @@ Player::~Player() {
     delete ordersList;
 }
 
+/*
+ * Returns a list of territories to defend
+ */
 vector<Territory*> Player::toDefend() const {
     cout << *name << " deciding which territories to defend..." << endl;
     return *territoriesOwned; // arbitrary
 }
 
+
+/*
+ * Returns a list of territories to attack
+ */
 vector<Territory*> Player::toAttack() const {
     cout << *name << " deciding which territories to attack..." << endl;
     return {}; // empty list, for now
 }
 
+/*
+ * Creates a new Order (Bomb for now) and adds it to the list
+ */
 void Player::issueOrder() {
     cout << *name << " is issuing an order..." << endl;
     
@@ -67,17 +84,63 @@ void Player::issueOrder() {
     ordersList->addOrder(newOrder);
 }
 
+
+/*
+ * Get Player Name
+ */
 string Player::getName() const {
     return *name;
 }
 
+/*
+ * Get Player Orders
+ */
 OrdersList* Player::getOrders() const{
     return ordersList;
 };
 
+/*
+ * Get Territories Owned
+ */
+vector<Territory*>* Player::getTerritoriesOwned() const {
+    return territoriesOwned;
+}
+
+/*
+ * Get Hand
+ */
+Hand* Player::getHand() const {
+    return hand;
+}
+
 ostream& operator<<(ostream& out, const Player& p) {
-    out << "Player: " << *p.name
-        << " | Territories: " << p.territoriesOwned->size()
-        << " | Orders: " << endl;
+    out << "========================================\n";
+    out << "Player: " << *p.name << "\n";
+    out << "========================================\n";
+    
+    // Display territories owned
+    out << "Territories Owned (" << p.territoriesOwned->size() << "):\n";
+    if (p.territoriesOwned->empty()) {
+        out << "  (none)\n";
+    } else {
+        for (size_t i = 0; i < p.territoriesOwned->size(); i++) {
+            out << "  " << (i + 1) << ". " 
+                << (*p.territoriesOwned)[i]->getName() << "\n";
+        }
+    }
+    
+    // Display orders
+    out << "\nOrders (" << p.ordersList->size() << "):\n";
+    if (p.ordersList->size() == 0) {
+        out << "  (none)\n";
+    } else {
+        for (size_t i = 0; i < p.ordersList->size(); i++) {
+            out << "  " << (i + 1) << ". " 
+                << *((*p.ordersList).orderAt(i)) << "\n";
+        }
+    }
+    
+    out << "========================================\n";
+    
     return out;
 }

@@ -126,6 +126,7 @@ public:
     void move(int fromIndex, int toIndex);
     void executeAll();
     int size() const;
+    Order* orderAt(int index) const;
 
 private:
     // This is a pointer to a vector of Order pointers, as per the assignment requirements.

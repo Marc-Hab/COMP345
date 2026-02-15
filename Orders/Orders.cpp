@@ -184,6 +184,10 @@ int OrdersList::size() const {
     return orders->size();
 }
 
+Order* OrdersList::orderAt(int index) const {
+    return orders->at(index);
+}
+
 std::ostream& operator<<(std::ostream& os, const OrdersList& list) {
     os << "--- Orders List ---\n";
     if (list.orders->empty()) {
