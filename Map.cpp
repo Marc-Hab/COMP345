@@ -57,37 +57,36 @@ Territory& Territory::operator=(const Territory& other) {
 }
 
 /**
- * Stream insertion operator for Territory
+ * Stream insertion operator for Territory (JSON format)
  */
 std::ostream& operator<<(std::ostream& out, const Territory& territory) {
-    out << "{";
+    out << "{" << "\n";
 
     // name
-    out << "\"name\": \"" << *(territory.name) << "\",";
+    out << "  " << "\"name\": " << "\"" << *(territory.name) << "\"" << ",\n";
 
     // continent (name only)
+    out << "  " << "\"continent\": ";
+
     if (territory.continent) {
-        out << "\"continent\": \"" 
-            << territory.continent->getName() 
-            << "\",";
+        out << "\"" << territory.continent->getName()  << "\"" << ",\n";
     } else {
-        out << "\"continent\": null,";
+        out << "null" << ",\n";
     }
 
-    // owner (use Player's stream operator)
+    // owner (name only)
+    out << "  " << "\"owner\": ";
     if (territory.owner) {
-        out << "\"owner\": ";
-        out << *(territory.owner);   // assumes Player << outputs JSON
-        out << ",";
+        out << territory.owner->getName() << ",\n";   // assumes Player << outputs JSON
     } else {
-        out << "\"owner\": null,";
+        out << "null" << ",\n";
     }
 
     // army count
-    out << "\"armies\": " << *(territory.armyCount) << ",";
+    out << "  " << "\"armies\": " << *(territory.armyCount) << ",\n";
 
     // adjacent territories (names only)
-    out << "\"adjacentTerritories\": [";
+    out << "  " << "\"adjacentTerritories\": [";
 
     if (territory.adjacentTerritories) {
         for (size_t i = 0; i < territory.adjacentTerritories->size(); ++i) {
@@ -95,14 +94,14 @@ std::ostream& operator<<(std::ostream& out, const Territory& territory) {
             out << "\"" << *(adj->name) << "\"";
 
             if (i != territory.adjacentTerritories->size() - 1) {
-                out << ",";
+                out << ", ";
             }
         }
     }
 
-    out << "]";
+    out << "]\n";
 
-    out << "}";
+    out << "}\n";
 
     return out;
 }
@@ -217,12 +216,37 @@ Continent& Continent::operator=(const Continent& other) {
 }
 
 /**
- * Stream insertion operator for Continent
+ * Stream insertion operator for Continent (JSON format)
  */
 std::ostream& operator<<(std::ostream& out, const Continent& continent) {
-    out << "Continent: " << *(continent.name);
-    out << ", Bonus: " << *(continent.bonusValue);
-    out << ", Territories: " << continent.territories->size();
+    out << "{\n";
+
+    // name
+    out << "  " << "\"name\": "
+        << "\"" << *(continent.name) << "\"" << ",\n";
+
+    // bonus
+    out << "  " << "\"bonus\": "
+        << *(continent.bonusValue) << ",\n";
+
+    // territories (names only)
+    out << "  " << "\"territories\": [";
+
+    if (continent.territories) {
+        for (size_t i = 0; i < continent.territories->size(); ++i) {
+            const Territory* territory = continent.territories->at(i);
+            out << "\"" << territory->getName() << "\"";
+
+            if (i != continent.territories->size() - 1) {
+                out << ", ";
+            }
+        }
+    }
+
+    out << "]\n";
+
+    out << "}\n";
+
     return out;
 }
 
@@ -295,11 +319,45 @@ Map& Map::operator=(const Map& other) {
 }
 
 /**
- * Stream insertion operator for Map
+ * Stream insertion operator for Map (JSON format)
  */
 std::ostream& operator<<(std::ostream& out, const Map& map) {
-    out << "Map with " << map.territories->size() << " territories and " 
-        << map.continents->size() << " continents";
+    out << "{\n";
+
+    // continents
+    out << "  " << "\"continents\": [";
+
+    if (map.continents) {
+        for (size_t i = 0; i < map.continents->size(); ++i) {
+            const Continent& continent = map.continents->at(i);
+            out << "\"" << continent.getName() << "\"";
+
+            if (i != map.continents->size() - 1) {
+                out << ", ";
+            }
+        }
+    }
+
+    out << "],\n";
+
+    // territories
+    out << "  " << "\"territories\": [";
+
+    if (map.territories) {
+        for (size_t i = 0; i < map.territories->size(); ++i) {
+            const Territory& territory = map.territories->at(i);
+            out << "\"" << territory.getName() << "\"";
+
+            if (i != map.territories->size() - 1) {
+                out << ", ";
+            }
+        }
+    }
+
+    out << "]\n";
+
+    out << "}\n";
+
     return out;
 }
 

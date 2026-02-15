@@ -4,7 +4,7 @@
 using namespace std;
 
 /**
- * Creates a simple valid map programmatically
+ * Creates a simple valid map
  */
 Map* createValidMap() {
     Map* map = new Map();
@@ -16,7 +16,7 @@ Map* createValidMap() {
     map->addContinent(northAmerica);
     map->addContinent(europe);
 
-    // Get pointers to the continents IN THE MAP (not the local variables)
+    // Get pointers to the continents IN THE MAP
     Continent* pNorthAmerica = &(map->getContinents()->at(0));
     Continent* pEurope = &(map->getContinents()->at(1));
     
@@ -36,7 +36,7 @@ Map* createValidMap() {
     france.setContinent(pEurope);
     germany.setContinent(pEurope);
 
-    // Add territories to map (this copies them)
+    // Add territories to map
     map->addTerritory(canada);
     map->addTerritory(usa);
     map->addTerritory(mexico);
@@ -44,7 +44,7 @@ Map* createValidMap() {
     map->addTerritory(france);
     map->addTerritory(germany);
     
-    // NOW get pointers to the territories IN THE MAP
+    // Get pointers to the territories IN THE MAP
     Territory* pCanada = &(map->getTerritories()->at(0));
     Territory* pUsa = &(map->getTerritories()->at(1));
     Territory* pMexico = &(map->getTerritories()->at(2));
@@ -212,12 +212,6 @@ int main() {
     cout << "TEST 1: Creating and validating a VALID map" << endl;
     cout << "--------------------------------------------" << endl;
     Map* validMap = createValidMap();
-    for (const Continent& c : *validMap->getContinents()){
-        cout << c << endl;
-    }
-    for (const Territory& t : *validMap->getTerritories()){
-        cout << t << endl;
-    }
     cout << *validMap << endl;
     bool isValid = validMap->validate();
     cout << "Overall validation result: " << (isValid ? "VALID" : "INVALID") << endl;
