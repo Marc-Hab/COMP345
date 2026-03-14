@@ -6,7 +6,6 @@
 #include <fstream>
 #include "../LoggingObserver/LoggingObserver.h"
 
-// Command must be defined before CommandProcessor since it is used as a parameter type.
 class Command : public Subject, public ILoggable {
 public:
     Command(std::string cmd);
@@ -15,12 +14,9 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Command& cmd);
     ~Command();
 
-    // Stores the effect and notifies observers (Part 5: triggers log entry).
     void saveEffect(std::string effect);
     std::string getCommandNameText();
     std::string getEffect();
-
-    // Returns the saved effect string for the log file entry.
     std::string stringToLog() const override;
 
 private:
@@ -39,10 +35,7 @@ public:
     Command* getCommand();
     bool validate(Command* command, std::string state);
 
-    // Stores the command and notifies observers (Part 5: triggers log entry).
     void saveCommand(Command* cmd);
-
-    // Returns the most recently saved command name for the log file entry.
     std::string stringToLog() const override;
 
 protected:
@@ -66,7 +59,6 @@ private:
     std::ifstream* fileStream;
 };
 
-// Adapter: reads commands from a file instead of the console.
 class FileCommandProcessorAdapter : public CommandProcessor {
 public:
     FileCommandProcessorAdapter(std::string filename);

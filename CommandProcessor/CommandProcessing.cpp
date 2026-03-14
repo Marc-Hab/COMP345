@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-// ---- Command ----
+// Command
 
 Command::Command(std::string cmd) : Subject() {
     this->command = new std::string(cmd);
@@ -30,7 +30,6 @@ Command::~Command() {
     delete this->effect;
 }
 
-// Stores the effect and notifies observers so it is written to the log file.
 void Command::saveEffect(std::string effectText) {
     *(this->effect) = effectText;
     notify(*this);
@@ -44,7 +43,6 @@ std::string Command::getEffect() {
     return *(this->effect);
 }
 
-// Returns the stored effect for the log file entry.
 std::string Command::stringToLog() const {
     return "Command effect saved: " + *(this->effect);
 }
@@ -54,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, const Command& cmd) {
     return os;
 }
 
-// ---- CommandProcessor ----
+// CommandProcessor
 
 CommandProcessor::CommandProcessor() : Subject() {
     this->commands = new std::list<Command*>();
@@ -103,7 +101,6 @@ Command* CommandProcessor::readCommand() {
     return new Command(input);
 }
 
-// Stores the command and notifies observers so it is written to the log file.
 void CommandProcessor::saveCommand(Command* cmd) {
     this->commands->push_back(cmd);
     notify(*this);
@@ -128,7 +125,6 @@ bool CommandProcessor::validate(Command* cmd, std::string currentState) {
     return false;
 }
 
-// Returns the name of the most recently saved command for the log file entry.
 std::string CommandProcessor::stringToLog() const {
     if (commands->empty()) return "CommandProcessor: no commands";
     return "Command saved: " + commands->back()->getCommandNameText();
@@ -142,7 +138,7 @@ std::ostream& operator<<(std::ostream& os, const CommandProcessor& cp) {
     return os;
 }
 
-// ---- FileLineReader ----
+// FileLineReader
 
 FileLineReader::FileLineReader() : fileStream(nullptr) {}
 
@@ -172,7 +168,7 @@ std::ostream& operator<<(std::ostream& os, const FileLineReader& flr) {
     return os;
 }
 
-// ---- FileCommandProcessorAdapter ----
+// FileCommandProcessorAdapter
 
 FileCommandProcessorAdapter::FileCommandProcessorAdapter(std::string filename) : CommandProcessor() {
     this->filestream = new std::ifstream(filename);
