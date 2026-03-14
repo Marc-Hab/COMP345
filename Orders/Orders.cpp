@@ -4,14 +4,15 @@
 #include "Orders.h"
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 
 // Order Class
 
-Order::Order() {
+Order::Order() : Subject() {
     effect = new std::string("");
 }
 
-Order::Order(const Order& other) {
+Order::Order(const Order& other) : Subject(other) {
     effect = new std::string(*other.effect);
 }
 
@@ -22,9 +23,15 @@ Order::~Order() {
 
 Order& Order::operator=(const Order& other) {
     if (this != &other) {
+        Subject::operator=(other);
         *effect = *other.effect;
     }
     return *this;
+}
+
+// Returns the effect string set by execute(), used by LogObserver.
+std::string Order::stringToLog() const {
+    return "Order executed: " + *effect;
 }
 
 std::ostream& operator<<(std::ostream& os, const Order& order) {
@@ -35,101 +42,133 @@ std::ostream& operator<<(std::ostream& os, const Order& order) {
     return os;
 }
 
-// Deploy Class
+// Deploy
 
 Deploy::Deploy() : Order() {}
 Deploy::Deploy(const Deploy& other) : Order(other) {}
 Deploy::~Deploy() {}
-Deploy& Deploy::operator=(const Deploy& other) {
-    Order::operator=(other);
-    return *this;
-}
-bool Deploy::validate() const {
-    return true; // For now we'll consider all orders as true (valid)
-}
+Deploy& Deploy::operator=(const Deploy& other) { Order::operator=(other); return *this; }
+
+bool Deploy::validate() const { return true; }
+
 void Deploy::execute() {
     if (validate()) {
         *effect = "Deployed armies.";
+        notify(*this);
     }
 }
-Deploy* Deploy::clone() const {
-    return new Deploy(*this);
-}
-void Deploy::print(std::ostream& os) const {
-    os << "Deploy Order";
-}
 
-//Advance Class
+Deploy* Deploy::clone() const { return new Deploy(*this); }
+void Deploy::print(std::ostream& os) const { os << "Deploy Order"; }
+
+// Advance
 
 Advance::Advance() : Order() {}
 Advance::Advance(const Advance& other) : Order(other) {}
 Advance::~Advance() {}
 Advance& Advance::operator=(const Advance& other) { Order::operator=(other); return *this; }
+
 bool Advance::validate() const { return true; }
-void Advance::execute() { if (validate()) { *effect = "Advanced armies."; } }
+
+void Advance::execute() {
+    if (validate()) {
+        *effect = "Advanced armies.";
+        notify(*this);
+    }
+}
+
 Advance* Advance::clone() const { return new Advance(*this); }
 void Advance::print(std::ostream& os) const { os << "Advance Order"; }
 
-// Bomb Class
+// Bomb
 
 Bomb::Bomb() : Order() {}
 Bomb::Bomb(const Bomb& other) : Order(other) {}
 Bomb::~Bomb() {}
 Bomb& Bomb::operator=(const Bomb& other) { Order::operator=(other); return *this; }
+
 bool Bomb::validate() const { return true; }
-void Bomb::execute() { if (validate()) { *effect = "Bombed a territory."; } }
+
+void Bomb::execute() {
+    if (validate()) {
+        *effect = "Bombed a territory.";
+        notify(*this);
+    }
+}
+
 Bomb* Bomb::clone() const { return new Bomb(*this); }
 void Bomb::print(std::ostream& os) const { os << "Bomb Order"; }
 
-// Blockade Class
+// Blockade
 
 Blockade::Blockade() : Order() {}
 Blockade::Blockade(const Blockade& other) : Order(other) {}
 Blockade::~Blockade() {}
 Blockade& Blockade::operator=(const Blockade& other) { Order::operator=(other); return *this; }
+
 bool Blockade::validate() const { return true; }
-void Blockade::execute() { if (validate()) { *effect = "Blockaded a territory."; } }
+
+void Blockade::execute() {
+    if (validate()) {
+        *effect = "Blockaded a territory.";
+        notify(*this);
+    }
+}
+
 Blockade* Blockade::clone() const { return new Blockade(*this); }
 void Blockade::print(std::ostream& os) const { os << "Blockade Order"; }
 
-//Airlift Class
+// Airlift
 
 Airlift::Airlift() : Order() {}
 Airlift::Airlift(const Airlift& other) : Order(other) {}
 Airlift::~Airlift() {}
 Airlift& Airlift::operator=(const Airlift& other) { Order::operator=(other); return *this; }
+
 bool Airlift::validate() const { return true; }
-void Airlift::execute() { if (validate()) { *effect = "Airlifted armies."; } }
+
+void Airlift::execute() {
+    if (validate()) {
+        *effect = "Airlifted armies.";
+        notify(*this);
+    }
+}
+
 Airlift* Airlift::clone() const { return new Airlift(*this); }
 void Airlift::print(std::ostream& os) const { os << "Airlift Order"; }
 
-// Negotiate Class
+// Negotiate
 
 Negotiate::Negotiate() : Order() {}
 Negotiate::Negotiate(const Negotiate& other) : Order(other) {}
 Negotiate::~Negotiate() {}
 Negotiate& Negotiate::operator=(const Negotiate& other) { Order::operator=(other); return *this; }
+
 bool Negotiate::validate() const { return true; }
-void Negotiate::execute() { if (validate()) { *effect = "Negotiated a truce."; } }
+
+void Negotiate::execute() {
+    if (validate()) {
+        *effect = "Negotiated a truce.";
+        notify(*this);
+    }
+}
+
 Negotiate* Negotiate::clone() const { return new Negotiate(*this); }
 void Negotiate::print(std::ostream& os) const { os << "Negotiate Order"; }
 
+// OrdersList
 
-// OrdersList Class 
-
-OrdersList::OrdersList() {
+OrdersList::OrdersList() : Subject() {
     orders = new std::vector<Order*>();
 }
 
-OrdersList::OrdersList(const OrdersList& other) {
+OrdersList::OrdersList(const OrdersList& other) : Subject(other) {
     orders = new std::vector<Order*>();
-    // Make a deep copy of each order in the other list
     for (int i = 0; i < other.orders->size(); i++) {
         orders->push_back((*other.orders)[i]->clone());
     }
 }
 
-// to delete the Order objects
 OrdersList::~OrdersList() {
     for (int i = 0; i < orders->size(); i++) {
         delete (*orders)[i];
@@ -137,16 +176,13 @@ OrdersList::~OrdersList() {
     delete orders;
 }
 
-// Assignment operator also for deep copy
 OrdersList& OrdersList::operator=(const OrdersList& other) {
     if (this != &other) {
-        // First, delete the old orders in this list
+        Subject::operator=(other);
         for (int i = 0; i < orders->size(); i++) {
             delete (*orders)[i];
         }
         orders->clear();
-
-        // copy  new orders from the other list
         for (int i = 0; i < other.orders->size(); i++) {
             orders->push_back((*other.orders)[i]->clone());
         }
@@ -154,20 +190,22 @@ OrdersList& OrdersList::operator=(const OrdersList& other) {
     return *this;
 }
 
+// Adds the order to the list and notifies observers so the addition is logged.
 void OrdersList::addOrder(Order* order) {
     orders->push_back(order);
+    notify(*this);
 }
 
 void OrdersList::remove(int index) {
     if (index >= 0 && index < orders->size()) {
-        delete (*orders)[index]; // delete order object
-        orders->erase(orders->begin() + index); // remove  pointer from vector
+        delete (*orders)[index];
+        orders->erase(orders->begin() + index);
     }
 }
 
 void OrdersList::move(int fromIndex, int toIndex) {
     if (fromIndex >= 0 && fromIndex < orders->size() &&
-        toIndex >= 0 && toIndex < orders->size()) {
+        toIndex  >= 0 && toIndex  < orders->size()) {
         Order* orderToMove = (*orders)[fromIndex];
         orders->erase(orders->begin() + fromIndex);
         orders->insert(orders->begin() + toIndex, orderToMove);
@@ -186,6 +224,16 @@ int OrdersList::size() const {
 
 Order* OrdersList::orderAt(int index) const {
     return orders->at(index);
+}
+
+// Describes the most recently added order for the log file.
+std::string OrdersList::stringToLog() const {
+    if (orders->empty()) {
+        return "OrdersList: no orders";
+    }
+    std::ostringstream oss;
+    oss << "Order added to list: " << *orders->back();
+    return oss.str();
 }
 
 std::ostream& operator<<(std::ostream& os, const OrdersList& list) {

@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include "../LoggingObserver/LoggingObserver.h"
 
 enum class GameState {
     Start,
@@ -33,7 +34,9 @@ enum class GameCommand {
     Invalid
 };
 
-class GameEngine {
+// GameEngine: manages game state transitions. Inherits Subject and ILoggable (Part 5)
+// so that transition() can notify observers whenever the state changes.
+class GameEngine : public Subject, public ILoggable {
 private:
     GameState* state; // pointer to satisfy rubric requirement
 
@@ -48,8 +51,10 @@ private:
 
     GameCommand parseCommand(const std::string& input) const;
 
-    static std::string stateToString(GameState s);
     static std::string commandToString(GameCommand c);
+
+    // Updates the game state and notifies observers (Part 5).
+    void transition(GameState newState);
 
 public:
     GameEngine();
@@ -62,6 +67,10 @@ public:
     bool applyCommand(const std::string& input);
 
     GameState getState() const;
+
+    static std::string stateToString(GameState s);
+
+    std::string stringToLog() const override;
 
     friend std::ostream& operator<<(std::ostream& os, const GameEngine& ge);
 };

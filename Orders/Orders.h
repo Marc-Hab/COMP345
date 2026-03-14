@@ -1,5 +1,4 @@
 // Orders.h
-// This file declares the classes for the orders part of the project.
 
 #ifndef ORDERS_H
 #define ORDERS_H
@@ -7,22 +6,24 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "../LoggingObserver/LoggingObserver.h"
 
 // FORWARD DECLARATIONS
 class Player;
 class Territory;
-
-// Base class for all orders
-class Order {
+class Order : public Subject, public ILoggable {
 public:
     Order();
     Order(const Order& other);
-    virtual ~Order(); // Trying out virtual destructor
+    virtual ~Order();
     Order& operator=(const Order& other);
 
     virtual bool validate() const = 0;
     virtual void execute() = 0;
-    virtual Order* clone() const = 0; // Doing a deep copy
+    virtual Order* clone() const = 0;
+
+    // Returns "Order executed: <effect>". Concrete in base class; all subclasses inherit it.
+    std::string stringToLog() const override;
 
 protected:
     std::string* effect;
@@ -32,7 +33,7 @@ private:
     virtual void print(std::ostream& os) const = 0;
 };
 
-// Classes for each type of Order
+// ---------- Concrete order types ----------
 
 class Deploy : public Order {
 public:
@@ -111,25 +112,25 @@ public:
 private:
     void print(std::ostream& os) const override;
 };
-
-
-// A class to hold a list of orders.
-class OrdersList {
+class OrdersList : public Subject, public ILoggable {
 public:
     OrdersList();
     OrdersList(const OrdersList& other);
     ~OrdersList();
     OrdersList& operator=(const OrdersList& other);
 
+    // Adds the order and notifies observers (triggers logging).
     void addOrder(Order* order);
+
     void remove(int index);
     void move(int fromIndex, int toIndex);
     void executeAll();
     int size() const;
     Order* orderAt(int index) const;
 
+    std::string stringToLog() const override;
+
 private:
-    // This is a pointer to a vector of Order pointers, as per the assignment requirements.
     std::vector<Order*>* orders;
 
     friend std::ostream& operator<<(std::ostream& os, const OrdersList& list);

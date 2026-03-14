@@ -2,7 +2,7 @@
 #include <cctype>
 #include <sstream>
 
-// ---------- Helpers ----------
+// Helpers
 static std::string toLowerTrimToken(const std::string& s) {
     // Take first token, lower-case it (commands may have args like "loadmap file.map")
     std::istringstream iss(s);
@@ -13,13 +13,14 @@ static std::string toLowerTrimToken(const std::string& s) {
     return token;
 }
 
-// ---------- GameEngine private ----------
+// GameEngine private
 void GameEngine::buildCommandLookup() {
     commandLookup.clear();
     commandLookup["loadmap"] = GameCommand::LoadMap;
     commandLookup["validatemap"] = GameCommand::ValidateMap;
     commandLookup["addplayer"] = GameCommand::AddPlayer;
     commandLookup["assigncountries"] = GameCommand::AssignCountries;
+    commandLookup["gamestart"]       = GameCommand::AssignCountries; // alias per assignment spec
     commandLookup["issueorder"] = GameCommand::IssueOrder;
     commandLookup["endissueorders"] = GameCommand::EndIssueOrders;
     commandLookup["execorder"] = GameCommand::ExecOrder;
@@ -121,14 +122,25 @@ std::string GameEngine::commandToString(GameCommand c) {
     }
 }
 
-// ---------- GameEngine public ----------
-GameEngine::GameEngine() {
+// GameEngine transition + logging
+
+void GameEngine::transition(GameState newState) {
+    *state = newState;
+    notify(*this);
+}
+
+std::string GameEngine::stringToLog() const {
+    return "GameEngine new state: " + stateToString(*state);
+}
+
+// GameEngine public
+GameEngine::GameEngine() : Subject() {
     state = new GameState(GameState::Start);
     buildCommandLookup();
     buildTransitions();
 }
 
-GameEngine::GameEngine(const GameEngine& other) : state(nullptr) {
+GameEngine::GameEngine(const GameEngine& other) : Subject(other), state(nullptr) {
     copyFrom(other);
 }
 
@@ -148,7 +160,7 @@ bool GameEngine::applyCommand(const std::string& input) {
     GameCommand cmd = parseCommand(input);
 
     if (cmd == GameCommand::Quit) {
-        *state = GameState::End;
+        transition(GameState::End);
         std::cout << "Quitting. State -> End\n";
         return false;
     }
@@ -167,7 +179,7 @@ bool GameEngine::applyCommand(const std::string& input) {
         return true;
     }
 
-    *state = it->second;
+    transition(it->second);
     std::cout << "Transitioned using '" << commandToString(cmd)
               << "' -> " << stateToString(*state) << "\n";
 

@@ -1,0 +1,11 @@
+GameEngine new state: MapLoaded
+GameEngine new state: MapValidated
+GameEngine new state: PlayersAdded
+GameEngine new state: PlayersAdded
+GameEngine new state: AssignReinforcement
+Order added to list: Deploy Order
+Order added to list: Advance Order
+Order added to list: Negotiate Order
+Order executed: Bombed a territory.
+Order executed: Blockaded a territory.
+Order executed: Airlifted armies.
