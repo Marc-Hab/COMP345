@@ -4,8 +4,6 @@
 #include "Orders.h"
 #include <iostream>
 #include <algorithm>
-#include <cstdlib> 
-#include <ctime>   
 
 // Order Class
 
@@ -13,16 +11,16 @@ Order::Order() {
     effect = new std::string("");
 }
 
-Order::Order(const Order& other) { //copy constructor
+Order::Order(const Order& other) {
     effect = new std::string(*other.effect);
 }
 
-Order::~Order() { //destructor
+Order::~Order() {
     delete effect;
     effect = nullptr;
 }
 
-Order& Order::operator=(const Order& other) { //copy assignement
+Order& Order::operator=(const Order& other) {
     if (this != &other) {
         *effect = *other.effect;
     }
@@ -39,25 +37,19 @@ std::ostream& operator<<(std::ostream& os, const Order& order) {
 
 // Deploy Class
 
-Deploy::Deploy() : Order(), issuingPlayer(nullptr), targetTerritory(nullptr), numArmies(0) {}
-Deploy::Deploy(Player* player, Territory* target, int armies) : Order(), issuingPlayer(player), targetTerritory(target), numArmies(armies) {}
-Deploy::Deploy(const Deploy& other) : Order(other), issuingPlayer(other.issuingPlayer), targetTerritory(other.targetTerritory), numArmies(other.numArmies) {} //copy constructor
-Deploy::~Deploy() {} 
+Deploy::Deploy() : Order() {}
+Deploy::Deploy(const Deploy& other) : Order(other) {}
+Deploy::~Deploy() {}
 Deploy& Deploy::operator=(const Deploy& other) {
     Order::operator=(other);
-    this->issuingPlayer = other.issuingPlayer;
-    this->targetTerritory = other.targetTerritory;
-    this->numArmies = other.numArmies;
     return *this;
 }
 bool Deploy::validate() const {
-    if (issuingPlayer == nullptr || targetTerritory == nullptr) return false;
-    return targetTerritory->getOwner() == issuingPlayer;
+    return true; // For now we'll consider all orders as true (valid)
 }
 void Deploy::execute() {
     if (validate()) {
-        targetTerritory->setArmyCount(targetTerritory->getArmyCount() + numArmies);
-        *effect = "Deployed " + std::to_string(numArmies) + " armies.";
+        *effect = "Deployed armies.";
     }
 }
 Deploy* Deploy::clone() const {
@@ -69,120 +61,55 @@ void Deploy::print(std::ostream& os) const {
 
 //Advance Class
 
-Advance::Advance() : Order(), issuingPlayer(nullptr), sourceTerritory(nullptr), targetTerritory(nullptr), numArmies(0) {}
-Advance::Advance(Player* player, Territory* source, Territory* target, int armies) : Order(), issuingPlayer(player), sourceTerritory(source), targetTerritory(target), numArmies(armies) {}
-Advance::Advance(const Advance& other) : Order(other), issuingPlayer(other.issuingPlayer), sourceTerritory(other.sourceTerritory), targetTerritory(other.targetTerritory), numArmies(other.numArmies) {}
+Advance::Advance() : Order() {}
+Advance::Advance(const Advance& other) : Order(other) {}
 Advance::~Advance() {}
 Advance& Advance::operator=(const Advance& other) { Order::operator=(other); return *this; }
-bool Advance::validate() const { 
-    if (sourceTerritory == nullptr || targetTerritory == nullptr) return false;
-    if (sourceTerritory->getOwner() != issuingPlayer) return false;
-    if (!sourceTerritory->isAdjacentTo(targetTerritory)) return false;
-    return true; 
-}
-void Advance::execute() { 
-    if (!validate()) return;
-    if (sourceTerritory->getOwner() == targetTerritory->getOwner()) {
-        sourceTerritory->setArmyCount(sourceTerritory->getArmyCount() - numArmies);
-        targetTerritory->setArmyCount(targetTerritory->getArmyCount() + numArmies);
-        *effect = "Advanced armies."; 
-    } else {
-        int attackers = numArmies;
-        int defenders = targetTerritory->getArmyCount();
-        while (attackers > 0 && defenders > 0) {
-            if ((rand() % 100) < 60) defenders--;
-            if (defenders > 0 && (rand() % 100) < 70) attackers--;
-        }
-        if (defenders <= 0) {
-            targetTerritory->setOwner(issuingPlayer);
-            targetTerritory->setArmyCount(attackers);
-            *effect = "Territory conquered.";
-        } else {
-            sourceTerritory->setArmyCount(sourceTerritory->getArmyCount() - numArmies);
-            targetTerritory->setArmyCount(defenders);
-            *effect = "Attack failed.";
-        }
-    }
-}
+bool Advance::validate() const { return true; }
+void Advance::execute() { if (validate()) { *effect = "Advanced armies."; } }
 Advance* Advance::clone() const { return new Advance(*this); }
 void Advance::print(std::ostream& os) const { os << "Advance Order"; }
 
 // Bomb Class
 
-Bomb::Bomb() : Order(), issuingPlayer(nullptr), targetTerritory(nullptr) {}
-Bomb::Bomb(Player* player, Territory* target) : Order(), issuingPlayer(player), targetTerritory(target) {}
-Bomb::Bomb(const Bomb& other) : Order(other), issuingPlayer(other.issuingPlayer), targetTerritory(other.targetTerritory) {}
+Bomb::Bomb() : Order() {}
+Bomb::Bomb(const Bomb& other) : Order(other) {}
 Bomb::~Bomb() {}
 Bomb& Bomb::operator=(const Bomb& other) { Order::operator=(other); return *this; }
-bool Bomb::validate() const { 
-    if (issuingPlayer == nullptr || targetTerritory == nullptr) return false;
-    if (targetTerritory->getOwner() == issuingPlayer) return false;
-    for (Territory* t : *issuingPlayer->getTerritoriesOwned()) {
-        if (t->isAdjacentTo(targetTerritory)) return true;
-    }
-    return false;
-}
-void Bomb::execute() { 
-    if (validate()) { 
-        targetTerritory->setArmyCount(targetTerritory->getArmyCount() / 2);
-        *effect = "Bombed a territory."; 
-    } 
-}
+bool Bomb::validate() const { return true; }
+void Bomb::execute() { if (validate()) { *effect = "Bombed a territory."; } }
 Bomb* Bomb::clone() const { return new Bomb(*this); }
 void Bomb::print(std::ostream& os) const { os << "Bomb Order"; }
 
 // Blockade Class
 
-Blockade::Blockade() : Order(), issuingPlayer(nullptr), targetTerritory(nullptr) {}
-Blockade::Blockade(Player* player, Territory* target) : Order(), issuingPlayer(player), targetTerritory(target) {}
-Blockade::Blockade(const Blockade& other) : Order(other), issuingPlayer(other.issuingPlayer), targetTerritory(other.targetTerritory) {}
+Blockade::Blockade() : Order() {}
+Blockade::Blockade(const Blockade& other) : Order(other) {}
 Blockade::~Blockade() {}
 Blockade& Blockade::operator=(const Blockade& other) { Order::operator=(other); return *this; }
-bool Blockade::validate() const { 
-    if (issuingPlayer == nullptr || targetTerritory == nullptr) return false;
-    return targetTerritory->getOwner() == issuingPlayer; 
-}
-void Blockade::execute() { 
-    if (validate()) { 
-        targetTerritory->setArmyCount(targetTerritory->getArmyCount() * 2);
-        *effect = "Blockaded a territory."; 
-    } 
-}
+bool Blockade::validate() const { return true; }
+void Blockade::execute() { if (validate()) { *effect = "Blockaded a territory."; } }
 Blockade* Blockade::clone() const { return new Blockade(*this); }
 void Blockade::print(std::ostream& os) const { os << "Blockade Order"; }
 
 //Airlift Class
 
-Airlift::Airlift() : Order(), issuingPlayer(nullptr), sourceTerritory(nullptr), targetTerritory(nullptr), numArmies(0) {}
-Airlift::Airlift(Player* player, Territory* source, Territory* target, int armies) : Order(), issuingPlayer(player), sourceTerritory(source), targetTerritory(target), numArmies(armies) {}
-Airlift::Airlift(const Airlift& other) : Order(other), issuingPlayer(other.issuingPlayer), sourceTerritory(other.sourceTerritory), targetTerritory(other.targetTerritory), numArmies(other.numArmies) {}
+Airlift::Airlift() : Order() {}
+Airlift::Airlift(const Airlift& other) : Order(other) {}
 Airlift::~Airlift() {}
 Airlift& Airlift::operator=(const Airlift& other) { Order::operator=(other); return *this; }
-bool Airlift::validate() const { 
-    if (issuingPlayer == nullptr || sourceTerritory == nullptr || targetTerritory == nullptr) return false;
-    return sourceTerritory->getOwner() == issuingPlayer && targetTerritory->getOwner() == issuingPlayer; 
-}
-void Airlift::execute() { 
-    if (validate()) { 
-        sourceTerritory->setArmyCount(sourceTerritory->getArmyCount() - numArmies);
-        targetTerritory->setArmyCount(targetTerritory->getArmyCount() + numArmies);
-        *effect = "Airlifted armies."; 
-    } 
-}
+bool Airlift::validate() const { return true; }
+void Airlift::execute() { if (validate()) { *effect = "Airlifted armies."; } }
 Airlift* Airlift::clone() const { return new Airlift(*this); }
 void Airlift::print(std::ostream& os) const { os << "Airlift Order"; }
 
 // Negotiate Class
 
-Negotiate::Negotiate() : Order(), issuingPlayer(nullptr), targetPlayer(nullptr) {}
-Negotiate::Negotiate(Player* player, Player* target) : Order(), issuingPlayer(player), targetPlayer(target) {}
-Negotiate::Negotiate(const Negotiate& other) : Order(other), issuingPlayer(other.issuingPlayer), targetPlayer(other.targetPlayer) {}
+Negotiate::Negotiate() : Order() {}
+Negotiate::Negotiate(const Negotiate& other) : Order(other) {}
 Negotiate::~Negotiate() {}
 Negotiate& Negotiate::operator=(const Negotiate& other) { Order::operator=(other); return *this; }
-bool Negotiate::validate() const { 
-    if (issuingPlayer == nullptr || targetPlayer == nullptr) return false;
-    return issuingPlayer != targetPlayer; 
-}
+bool Negotiate::validate() const { return true; }
 void Negotiate::execute() { if (validate()) { *effect = "Negotiated a truce."; } }
 Negotiate* Negotiate::clone() const { return new Negotiate(*this); }
 void Negotiate::print(std::ostream& os) const { os << "Negotiate Order"; }
@@ -232,15 +159,15 @@ void OrdersList::addOrder(Order* order) {
 }
 
 void OrdersList::remove(int index) {
-    if (index >= 0 && index < static_cast<int>(orders->size())) {
+    if (index >= 0 && index < orders->size()) {
         delete (*orders)[index]; // delete order object
         orders->erase(orders->begin() + index); // remove  pointer from vector
     }
 }
 
 void OrdersList::move(int fromIndex, int toIndex) {
-    if (fromIndex >= 0 && fromIndex < static_cast<int>(orders->size()) &&
-        toIndex >= 0 && toIndex < static_cast<int>(orders->size())) {
+    if (fromIndex >= 0 && fromIndex < orders->size() &&
+        toIndex >= 0 && toIndex < orders->size()) {
         Order* orderToMove = (*orders)[fromIndex];
         orders->erase(orders->begin() + fromIndex);
         orders->insert(orders->begin() + toIndex, orderToMove);
@@ -248,13 +175,13 @@ void OrdersList::move(int fromIndex, int toIndex) {
 }
 
 void OrdersList::executeAll() {
-    for (int i = 0; i < static_cast<int>(orders->size()); i++) {
+    for (int i = 0; i < orders->size(); i++) {
         (*orders)[i]->execute();
     }
 }
 
 int OrdersList::size() const {
-    return static_cast<int>(orders->size());
+    return orders->size();
 }
 
 Order* OrdersList::orderAt(int index) const {
