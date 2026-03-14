@@ -141,7 +141,7 @@ private:
 };
 
 // A class to hold a list of orders.
-class OrdersList {
+class OrdersList : public Subject, public ILoggable {
 public:
     OrdersList();
     OrdersList(const OrdersList& other);
@@ -156,6 +156,8 @@ public:
     void executeAll();
     int size() const;
     Order* orderAt(int index) const;
+
+    std::string stringToLog() const override;
 
 private:
     std::vector<Order*>* orders;

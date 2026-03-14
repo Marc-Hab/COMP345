@@ -14,7 +14,7 @@ Order::Order() : Subject() {
     effect = new std::string("");
 }
 
-Order::Order(const Order& other) { //copy constructor
+Order::Order(const Order& other) : Subject(other) { //copy constructor
     effect = new std::string(*other.effect);
 }
 
@@ -66,6 +66,7 @@ void Deploy::execute() {
         targetTerritory->setArmyCount(targetTerritory->getArmyCount() + numArmies);
         *effect = "Deployed " + std::to_string(numArmies) + " armies.";
     }
+    notify(*this);
 }
 
 Deploy* Deploy::clone() const { return new Deploy(*this); }
@@ -84,29 +85,31 @@ bool Advance::validate() const {
     if (!sourceTerritory->isAdjacentTo(targetTerritory)) return false;
     return true; 
 }
-void Advance::execute() { 
-    if (!validate()) return;
-    if (sourceTerritory->getOwner() == targetTerritory->getOwner()) {
-        sourceTerritory->setArmyCount(sourceTerritory->getArmyCount() - numArmies);
-        targetTerritory->setArmyCount(targetTerritory->getArmyCount() + numArmies);
-        *effect = "Advanced armies."; 
-    } else {
-        int attackers = numArmies;
-        int defenders = targetTerritory->getArmyCount();
-        while (attackers > 0 && defenders > 0) {
-            if ((rand() % 100) < 60) defenders--;
-            if (defenders > 0 && (rand() % 100) < 70) attackers--;
-        }
-        if (defenders <= 0) {
-            targetTerritory->setOwner(issuingPlayer);
-            targetTerritory->setArmyCount(attackers);
-            *effect = "Territory conquered.";
-        } else {
+void Advance::execute() {
+    if (validate()) {
+        if (sourceTerritory->getOwner() == targetTerritory->getOwner()) {
             sourceTerritory->setArmyCount(sourceTerritory->getArmyCount() - numArmies);
-            targetTerritory->setArmyCount(defenders);
-            *effect = "Attack failed.";
+            targetTerritory->setArmyCount(targetTerritory->getArmyCount() + numArmies);
+            *effect = "Advanced armies.";
+        } else {
+            int attackers = numArmies;
+            int defenders = targetTerritory->getArmyCount();
+            while (attackers > 0 && defenders > 0) {
+                if ((rand() % 100) < 60) defenders--;
+                if (defenders > 0 && (rand() % 100) < 70) attackers--;
+            }
+            if (defenders <= 0) {
+                targetTerritory->setOwner(issuingPlayer);
+                targetTerritory->setArmyCount(attackers);
+                *effect = "Territory conquered.";
+            } else {
+                sourceTerritory->setArmyCount(sourceTerritory->getArmyCount() - numArmies);
+                targetTerritory->setArmyCount(defenders);
+                *effect = "Attack failed.";
+            }
         }
     }
+    notify(*this);
 }
 Advance* Advance::clone() const { return new Advance(*this); }
 void Advance::print(std::ostream& os) const { os << "Advance Order"; }
@@ -126,11 +129,12 @@ bool Bomb::validate() const {
     }
     return false;
 }
-void Bomb::execute() { 
-    if (validate()) { 
+void Bomb::execute() {
+    if (validate()) {
         targetTerritory->setArmyCount(targetTerritory->getArmyCount() / 2);
-        *effect = "Bombed a territory."; 
-    } 
+        *effect = "Bombed a territory.";
+    }
+    notify(*this);
 }
 Bomb* Bomb::clone() const { return new Bomb(*this); }
 void Bomb::print(std::ostream& os) const { os << "Bomb Order"; }
@@ -146,11 +150,12 @@ bool Blockade::validate() const {
     if (issuingPlayer == nullptr || targetTerritory == nullptr) return false;
     return targetTerritory->getOwner() == issuingPlayer; 
 }
-void Blockade::execute() { 
-    if (validate()) { 
+void Blockade::execute() {
+    if (validate()) {
         targetTerritory->setArmyCount(targetTerritory->getArmyCount() * 2);
-        *effect = "Blockaded a territory."; 
-    } 
+        *effect = "Blockaded a territory.";
+    }
+    notify(*this);
 }
 Blockade* Blockade::clone() const { return new Blockade(*this); }
 void Blockade::print(std::ostream& os) const { os << "Blockade Order"; }
@@ -166,12 +171,13 @@ bool Airlift::validate() const {
     if (issuingPlayer == nullptr || sourceTerritory == nullptr || targetTerritory == nullptr) return false;
     return sourceTerritory->getOwner() == issuingPlayer && targetTerritory->getOwner() == issuingPlayer; 
 }
-void Airlift::execute() { 
-    if (validate()) { 
+void Airlift::execute() {
+    if (validate()) {
         sourceTerritory->setArmyCount(sourceTerritory->getArmyCount() - numArmies);
         targetTerritory->setArmyCount(targetTerritory->getArmyCount() + numArmies);
-        *effect = "Airlifted armies."; 
-    } 
+        *effect = "Airlifted armies.";
+    }
+    notify(*this);
 }
 Airlift* Airlift::clone() const { return new Airlift(*this); }
 void Airlift::print(std::ostream& os) const { os << "Airlift Order"; }
@@ -187,7 +193,12 @@ bool Negotiate::validate() const {
     if (issuingPlayer == nullptr || targetPlayer == nullptr) return false;
     return issuingPlayer != targetPlayer; 
 }
-void Negotiate::execute() { if (validate()) { *effect = "Negotiated a truce."; } }
+void Negotiate::execute() {
+    if (validate()) {
+        *effect = "Negotiated a truce.";
+    }
+    notify(*this);
+}
 Negotiate* Negotiate::clone() const { return new Negotiate(*this); }
 void Negotiate::print(std::ostream& os) const { os << "Negotiate Order"; }
 
