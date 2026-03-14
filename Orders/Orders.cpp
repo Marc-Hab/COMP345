@@ -33,6 +33,7 @@ Order& Order::operator=(const Order& other) { //copy assignement
 
 // Returns the effect string set by execute(), used by LogObserver.
 std::string Order::stringToLog() const {
+    if (effect->empty()) return "Order executed: (no effect)";
     return "Order executed: " + *effect;
 }
 

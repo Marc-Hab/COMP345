@@ -9,3 +9,9 @@ Order added to list: Negotiate Order
 Order executed: Bombed a territory.
 Order executed: Blockaded a territory.
 Order executed: Airlifted armies.
+Command saved: loadmap world.map
+Command saved: validatemap
+Command saved: addplayer Alice
+Command effect saved: Map loaded successfully.
+Command effect saved: Error: 'validatemap' is not valid in state Start
+Command effect saved: Player Alice added.
