@@ -18,7 +18,7 @@ enum class GameState {
     End
 };
 
-enum class GameCommand {
+enum class Command {
     LoadMap,
     ValidateMap,
     AddPlayer,
@@ -37,8 +37,8 @@ class GameEngine {
 private:
     GameState* state; // pointer to satisfy rubric requirement
 
-    std::map<std::pair<GameState, GameCommand>, GameState> transitions;
-    std::map<std::string, GameCommand> commandLookup;
+    std::map<std::pair<GameState, Command>, GameState> transitions;
+    std::map<std::string, Command> commandLookup;
 
     void buildCommandLookup();
     void buildTransitions();
@@ -46,10 +46,10 @@ private:
     void clear();
     void copyFrom(const GameEngine& other);
 
-    GameCommand parseCommand(const std::string& input) const;
+    Command parseCommand(const std::string& input) const;
 
     static std::string stateToString(GameState s);
-    static std::string commandToString(GameCommand c);
+    static std::string commandToString(Command c);
 
 public:
     GameEngine();
