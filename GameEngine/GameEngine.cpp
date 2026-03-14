@@ -16,58 +16,58 @@ static std::string toLowerTrimToken(const std::string& s) {
 // ---------- GameEngine private ----------
 void GameEngine::buildCommandLookup() {
     commandLookup.clear();
-    commandLookup["loadmap"] = Command::LoadMap;
-    commandLookup["validatemap"] = Command::ValidateMap;
-    commandLookup["addplayer"] = Command::AddPlayer;
-    commandLookup["assigncountries"] = Command::AssignCountries;
-    commandLookup["issueorder"] = Command::IssueOrder;
-    commandLookup["endissueorders"] = Command::EndIssueOrders;
-    commandLookup["execorder"] = Command::ExecOrder;
-    commandLookup["endexecorders"] = Command::EndExecOrders;
-    commandLookup["win"] = Command::WinCmd;   // helper command to demonstrate win state
-    commandLookup["play"] = Command::Play;
-    commandLookup["quit"] = Command::Quit;
+    commandLookup["loadmap"] = GameCommand::LoadMap;
+    commandLookup["validatemap"] = GameCommand::ValidateMap;
+    commandLookup["addplayer"] = GameCommand::AddPlayer;
+    commandLookup["assigncountries"] = GameCommand::AssignCountries;
+    commandLookup["issueorder"] = GameCommand::IssueOrder;
+    commandLookup["endissueorders"] = GameCommand::EndIssueOrders;
+    commandLookup["execorder"] = GameCommand::ExecOrder;
+    commandLookup["endexecorders"] = GameCommand::EndExecOrders;
+    commandLookup["win"] = GameCommand::WinCmd;   // helper command to demonstrate win state
+    commandLookup["play"] = GameCommand::Play;
+    commandLookup["quit"] = GameCommand::Quit;
 }
 
 void GameEngine::buildTransitions() {
     transitions.clear();
 
     // --- Startup phase ---
-    transitions[{GameState::Start, Command::LoadMap}] = GameState::MapLoaded;
+    transitions[{GameState::Start, GameCommand::LoadMap}] = GameState::MapLoaded;
 
     // Allow re-loading map while still setting up
-    transitions[{GameState::MapLoaded, Command::LoadMap}] = GameState::MapLoaded;
-    transitions[{GameState::MapLoaded, Command::ValidateMap}] = GameState::MapValidated;
+    transitions[{GameState::MapLoaded, GameCommand::LoadMap}] = GameState::MapLoaded;
+    transitions[{GameState::MapLoaded, GameCommand::ValidateMap}] = GameState::MapValidated;
 
     // In many versions, you can loadmap again even after validate; adjust if your diagram differs
-    transitions[{GameState::MapValidated, Command::LoadMap}] = GameState::MapLoaded;
-    transitions[{GameState::MapValidated, Command::AddPlayer}] = GameState::PlayersAdded;
+    transitions[{GameState::MapValidated, GameCommand::LoadMap}] = GameState::MapLoaded;
+    transitions[{GameState::MapValidated, GameCommand::AddPlayer}] = GameState::PlayersAdded;
 
     // Add multiple players
-    transitions[{GameState::PlayersAdded, Command::AddPlayer}] = GameState::PlayersAdded;
+    transitions[{GameState::PlayersAdded, GameCommand::AddPlayer}] = GameState::PlayersAdded;
 
     // Often allowed to loadmap again before assigning countries; adjust if needed
-    transitions[{GameState::PlayersAdded, Command::LoadMap}] = GameState::MapLoaded;
+    transitions[{GameState::PlayersAdded, GameCommand::LoadMap}] = GameState::MapLoaded;
 
-    transitions[{GameState::PlayersAdded, Command::AssignCountries}] = GameState::AssignReinforcement;
+    transitions[{GameState::PlayersAdded, GameCommand::AssignCountries}] = GameState::AssignReinforcement;
 
     // --- Play phase loop ---
     // AssignReinforcement -> IssueOrders (first issueorder moves you into issue state)
-    transitions[{GameState::AssignReinforcement, Command::IssueOrder}] = GameState::IssueOrders;
+    transitions[{GameState::AssignReinforcement, GameCommand::IssueOrder}] = GameState::IssueOrders;
 
     // IssueOrders: can issue many orders
-    transitions[{GameState::IssueOrders, Command::IssueOrder}] = GameState::IssueOrders;
-    transitions[{GameState::IssueOrders, Command::EndIssueOrders}] = GameState::ExecuteOrders;
+    transitions[{GameState::IssueOrders, GameCommand::IssueOrder}] = GameState::IssueOrders;
+    transitions[{GameState::IssueOrders, GameCommand::EndIssueOrders}] = GameState::ExecuteOrders;
 
     // ExecuteOrders: execute many orders
-    transitions[{GameState::ExecuteOrders, Command::ExecOrder}] = GameState::ExecuteOrders;
-    transitions[{GameState::ExecuteOrders, Command::EndExecOrders}] = GameState::AssignReinforcement;
+    transitions[{GameState::ExecuteOrders, GameCommand::ExecOrder}] = GameState::ExecuteOrders;
+    transitions[{GameState::ExecuteOrders, GameCommand::EndExecOrders}] = GameState::AssignReinforcement;
 
     // Demo win transition (since we aren't implementing full gameplay)
-    transitions[{GameState::ExecuteOrders, Command::WinCmd}] = GameState::Win;
+    transitions[{GameState::ExecuteOrders, GameCommand::WinCmd}] = GameState::Win;
 
     // Win state
-    transitions[{GameState::Win, Command::Play}] = GameState::Start;
+    transitions[{GameState::Win, GameCommand::Play}] = GameState::Start;
 }
 
 void GameEngine::clear() {
@@ -81,10 +81,10 @@ void GameEngine::copyFrom(const GameEngine& other) {
     commandLookup = other.commandLookup;
 }
 
-Command GameEngine::parseCommand(const std::string& input) const {
+GameCommand GameEngine::parseCommand(const std::string& input) const {
     std::string token = toLowerTrimToken(input);
     auto it = commandLookup.find(token);
-    if (it == commandLookup.end()) return Command::Invalid;
+    if (it == commandLookup.end()) return GameCommand::Invalid;
     return it->second;
 }
 
@@ -103,20 +103,20 @@ std::string GameEngine::stateToString(GameState s) {
     }
 }
 
-std::string GameEngine::commandToString(Command c) {
+std::string GameEngine::commandToString(GameCommand c) {
     switch (c) {
-        case Command::LoadMap: return "loadmap";
-        case Command::ValidateMap: return "validatemap";
-        case Command::AddPlayer: return "addplayer";
-        case Command::AssignCountries: return "assigncountries";
-        case Command::IssueOrder: return "issueorder";
-        case Command::EndIssueOrders: return "endissueorders";
-        case Command::ExecOrder: return "execorder";
-        case Command::EndExecOrders: return "endexecorders";
-        case Command::WinCmd: return "win";
-        case Command::Play: return "play";
-        case Command::Quit: return "quit";
-        case Command::Invalid: return "invalid";
+        case GameCommand::LoadMap: return "loadmap";
+        case GameCommand::ValidateMap: return "validatemap";
+        case GameCommand::AddPlayer: return "addplayer";
+        case GameCommand::AssignCountries: return "assigncountries";
+        case GameCommand::IssueOrder: return "issueorder";
+        case GameCommand::EndIssueOrders: return "endissueorders";
+        case GameCommand::ExecOrder: return "execorder";
+        case GameCommand::EndExecOrders: return "endexecorders";
+        case GameCommand::WinCmd: return "win";
+        case GameCommand::Play: return "play";
+        case GameCommand::Quit: return "quit";
+        case GameCommand::Invalid: return "invalid";
         default: return "unknown";
     }
 }
@@ -145,15 +145,15 @@ GameEngine::~GameEngine() {
 }
 
 bool GameEngine::applyCommand(const std::string& input) {
-    Command cmd = parseCommand(input);
+    GameCommand cmd = parseCommand(input);
 
-    if (cmd == Command::Quit) {
+    if (cmd == GameCommand::Quit) {
         *state = GameState::End;
         std::cout << "Quitting. State -> End\n";
         return false;
     }
 
-    if (cmd == Command::Invalid) {
+    if (cmd == GameCommand::Invalid) {
         std::cout << "ERROR: Unknown command.\n";
         return true;
     }
