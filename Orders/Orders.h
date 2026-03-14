@@ -8,6 +8,10 @@
 #include <vector>
 #include "../LoggingObserver/LoggingObserver.h"
 
+// Relative paths based on your folder structure
+#include "../Players/Player.h"
+#include "../Maps/Map.h"
+
 // FORWARD DECLARATIONS
 class Player;
 class Territory;
@@ -37,7 +41,8 @@ private:
 
 class Deploy : public Order {
 public:
-    Deploy();
+    Deploy(); // Default constructor for compatibility
+    Deploy(Player* player, Territory* target, int armies);
     Deploy(const Deploy& other);
     ~Deploy();
     Deploy& operator=(const Deploy& other);
@@ -45,12 +50,16 @@ public:
     void execute() override;
     Deploy* clone() const override;
 private:
+    Player* issuingPlayer;
+    Territory* targetTerritory;
+    int numArmies;
     void print(std::ostream& os) const override;
 };
 
 class Advance : public Order {
 public:
-    Advance();
+    Advance(); // Default constructor for compatibility
+    Advance(Player* player, Territory* source, Territory* target, int armies);
     Advance(const Advance& other);
     ~Advance();
     Advance& operator=(const Advance& other);
@@ -58,12 +67,17 @@ public:
     void execute() override;
     Advance* clone() const override;
 private:
+    Player* issuingPlayer;
+    Territory* sourceTerritory;
+    Territory* targetTerritory;
+    int numArmies;
     void print(std::ostream& os) const override;
 };
 
 class Bomb : public Order {
 public:
-    Bomb();
+    Bomb(); // Default constructor for compatibility
+    Bomb(Player* player, Territory* target);
     Bomb(const Bomb& other);
     ~Bomb();
     Bomb& operator=(const Bomb& other);
@@ -71,12 +85,15 @@ public:
     void execute() override;
     Bomb* clone() const override;
 private:
+    Player* issuingPlayer;
+    Territory* targetTerritory;
     void print(std::ostream& os) const override;
 };
 
 class Blockade : public Order {
 public:
-    Blockade();
+    Blockade(); // Default constructor for compatibility
+    Blockade(Player* player, Territory* target);
     Blockade(const Blockade& other);
     ~Blockade();
     Blockade& operator=(const Blockade& other);
@@ -84,12 +101,15 @@ public:
     void execute() override;
     Blockade* clone() const override;
 private:
+    Player* issuingPlayer;
+    Territory* targetTerritory;
     void print(std::ostream& os) const override;
 };
 
 class Airlift : public Order {
 public:
-    Airlift();
+    Airlift(); // Default constructor for compatibility
+    Airlift(Player* player, Territory* source, Territory* target, int armies);
     Airlift(const Airlift& other);
     ~Airlift();
     Airlift& operator=(const Airlift& other);
@@ -97,12 +117,17 @@ public:
     void execute() override;
     Airlift* clone() const override;
 private:
+    Player* issuingPlayer;
+    Territory* sourceTerritory;
+    Territory* targetTerritory;
+    int numArmies;
     void print(std::ostream& os) const override;
 };
 
 class Negotiate : public Order {
 public:
-    Negotiate();
+    Negotiate(); // Default constructor for compatibility
+    Negotiate(Player* player, Player* target);
     Negotiate(const Negotiate& other);
     ~Negotiate();
     Negotiate& operator=(const Negotiate& other);
@@ -110,9 +135,13 @@ public:
     void execute() override;
     Negotiate* clone() const override;
 private:
+    Player* issuingPlayer;
+    Player* targetPlayer;
     void print(std::ostream& os) const override;
 };
-class OrdersList : public Subject, public ILoggable {
+
+// A class to hold a list of orders.
+class OrdersList {
 public:
     OrdersList();
     OrdersList(const OrdersList& other);
@@ -127,8 +156,6 @@ public:
     void executeAll();
     int size() const;
     Order* orderAt(int index) const;
-
-    std::string stringToLog() const override;
 
 private:
     std::vector<Order*>* orders;
