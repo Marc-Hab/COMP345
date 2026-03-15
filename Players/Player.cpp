@@ -15,6 +15,7 @@ Player::Player(string playerName) {
     territoriesOwned = new vector<Territory*>();
     hand = new Hand();
     ordersList = new OrdersList();
+    reinforcementPool = new int(0);
 }
 
 /*
@@ -25,6 +26,7 @@ Player::Player(const Player& other) {
     territoriesOwned = new vector<Territory*>(*other.territoriesOwned);
     hand = new Hand(*other.hand);
     ordersList = new OrdersList(*other.ordersList);
+    reinforcementPool = new int(*other.reinforcementPool);
 }
 
 
@@ -37,11 +39,13 @@ Player& Player::operator=(const Player& other) {
         delete territoriesOwned;
         delete hand;
         delete ordersList;
+        delete reinforcementPool;
 
         name = new string(*other.name);
         territoriesOwned = new vector<Territory*>(*other.territoriesOwned);
         hand = new Hand(*other.hand);
         ordersList = new OrdersList(*other.ordersList);
+        reinforcementPool = new int(*other.reinforcementPool);
     }
     return *this;
 }
@@ -54,6 +58,7 @@ Player::~Player() {
     delete territoriesOwned;
     delete hand;
     delete ordersList;
+    delete reinforcementPool;
 }
 
 /*
@@ -113,9 +118,31 @@ Hand* Player::getHand() const {
     return hand;
 }
 
+/*
+ * Get Reinforcement Pool
+ */
+int Player::getReinforcementPool() const {
+    return *reinforcementPool;
+}
+
+/*
+ * Set Reinforcement Pool
+ */
+void Player::setReinforcementPool(int count) {
+    *reinforcementPool = count;
+}
+
+/*
+ * Add armies to Reinforcement Pool
+ */
+void Player::addReinforcements(int count) {
+    *reinforcementPool += count;
+}
+
 ostream& operator<<(ostream& out, const Player& p) {
     out << "========================================\n";
     out << "Player: " << *p.name << "\n";
+    out << "Reinforcement Pool: " << *p.reinforcementPool << " armies\n";
     out << "========================================\n";
     
     // Display territories owned

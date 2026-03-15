@@ -5,10 +5,14 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
 // forward declarations
 class CommandProcessor;
 class Command;
+class Map;
+class Player;
+class Deck;
 
 enum class GameState {
     Start,
@@ -54,10 +58,24 @@ private:
 
     std::map<std::pair<GameState, CommandName>, GameState> transitions;
 
-    void buildTransitions();
+    // Game data
+    Map* gameMap;
+    std::vector<Player*>* players;
+    Deck* deck;
 
+    void buildTransitions();
     void clear();
     void copyFrom(const GameEngine& other);
+
+    // Startup action handlers
+    bool executeCommand(Command* cmd, GameState oldState);
+    bool loadMap(Command* cmd, GameState oldState);
+    bool validateMap(Command* cmd, GameState oldState);
+    bool addPlayer(Command* cmd, GameState oldState);
+    bool gameStart(Command* cmd, GameState oldState);
+
+    // Print available map files
+    void listAvailableMaps() const;
 
 public:
     GameEngine();
@@ -66,16 +84,21 @@ public:
     GameEngine& operator=(const GameEngine& other);
     ~GameEngine();
 
-    // Main game loop
+    // Startup phase: loadmap -> validatemap -> addplayer(s) -> gamestart
+    void startupPhase();
+
+    // Game loop
     void run();
-    
+
     // Process single command
     bool processNextCommand();
-    
-    // Apply validated command (transitions state)
+
+    // Apply validated command to transition state
     void applyCommand(Command* cmd);
 
     GameState getState() const;
+    std::vector<Player*>* getPlayers() const;
+    Map* getMap() const;
 
     friend std::ostream& operator<<(std::ostream& os, const GameEngine& ge);
 };

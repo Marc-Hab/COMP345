@@ -16,6 +16,7 @@ private:
     std::vector<Territory*>* territoriesOwned;
     Hand* hand;
     OrdersList* ordersList;
+    int* reinforcementPool;
 
 public:
     // Constructors, destructor, operator overloads
@@ -34,6 +35,11 @@ public:
     OrdersList* getOrders() const;
     std::vector<Territory*>* getTerritoriesOwned() const;
     Hand* getHand() const;
+    int getReinforcementPool() const;
+
+    // Setters
+    void setReinforcementPool(int count);
+    void addReinforcements(int count);
 
     // Operator Overload
     friend std::ostream& operator<<(std::ostream& out, const Player& p);
