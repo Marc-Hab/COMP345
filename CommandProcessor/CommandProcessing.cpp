@@ -3,17 +3,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
 
-//----------------------------------------------------------
-// File Line Reader Implementation
-//----------------------------------------------------------
-
-/**
- * Constructor
- */
+// --- FileLineReader ---
+// Constructor
 FileLineReader::FileLineReader(const string& filePath) {
     this->filePath = new string(filePath);
     this->fileStream = new ifstream(*this->filePath);
@@ -25,9 +21,7 @@ FileLineReader::FileLineReader(const string& filePath) {
     }
 }
 
-/**
- * Copy constructor (deep copy)
- */
+// Copy constructor
 FileLineReader::FileLineReader(const FileLineReader& other) {
     filePath = new string(*other.filePath);
     fileStream = new ifstream(*filePath);
@@ -38,9 +32,7 @@ FileLineReader::FileLineReader(const FileLineReader& other) {
     }
 }
 
-/**
- * Destructor
- */
+// Destructor
 FileLineReader::~FileLineReader() {
     if (fileStream) {
         if (fileStream->is_open()) {
@@ -51,9 +43,7 @@ FileLineReader::~FileLineReader() {
     delete filePath;
 }
 
-/**
- * Assignment Operator
- */
+// Assignment operator
 FileLineReader& FileLineReader::operator=(const FileLineReader& other) {
     if (this == &other) return *this;
     
@@ -78,9 +68,7 @@ FileLineReader& FileLineReader::operator=(const FileLineReader& other) {
     return *this;
 }
 
-/**
- * Stream Insertion Operator
- */
+// Stream insertion operator
 ostream& operator<<(ostream& os, const FileLineReader& flr) {
     os << "FileLineReader [File: " << *flr.filePath;
     if (flr.fileStream && flr.fileStream->is_open()) {
@@ -92,17 +80,10 @@ ostream& operator<<(ostream& os, const FileLineReader& flr) {
     return os;
 }
 
-/**
- * Returns if the filestream is open
- */
 bool FileLineReader::isOpen() const{
     return fileStream->is_open();
 }
 
-/**
- * Reads a line from the file.
- * If file closed, empty string will be returned.
- */
 string FileLineReader::readLineFromFile() {
 
     // Check if filestream is valid
@@ -116,48 +97,32 @@ string FileLineReader::readLineFromFile() {
         return line;
     }
     
-    return "";  // Return empty string if EOF or error
+    return "";
 }
 
-//----------------------------------------------------------
-// End of File Line Reader Implementation
-//----------------------------------------------------------
-
-
-//----------------------------------------------------------
-// Command Implementation
-//----------------------------------------------------------
-
-/**
- * Constructor : No arguments
- */
+// --- Command ---
+// Constructor
 Command::Command(CommandName cmdName) {
     commandName = new CommandName(cmdName);
     arguments = new vector<string>();
     effect = new string("");
 }
 
-/**
- * Constructor :  With arguments
- */
+// Constructor with arguments
 Command::Command(CommandName cmdName, const vector<string>& args) {
     commandName = new CommandName(cmdName);
     arguments = new vector<string>(args);
     effect = new string("");
 }
 
-/**
- * Copy Constructor
- */
+// Copy constructor
 Command::Command(const Command& other) {
     commandName = new CommandName(*other.commandName);
     arguments = new vector<string>(*other.arguments);
     effect = new string(*other.effect);
 }
 
-/**
- * Destructor
- */
+// Destructor
 Command::~Command() {
     delete commandName;
     delete effect;
@@ -167,9 +132,7 @@ Command::~Command() {
     arguments = nullptr;
 }
 
-/**
- * Assignment Operator
- */
+// Assignment operator
 Command& Command::operator=(const Command& other) {
     if (this == &other) {
         return *this;
@@ -183,9 +146,7 @@ Command& Command::operator=(const Command& other) {
     return *this;
 }
 
-/**
- * Stream Insertion Operator
- */
+// Stream insertion operator
 ostream& operator<<(ostream& os, const Command& cmd) {
     os << "Command: " << cmd.getCommandName();
     
@@ -205,30 +166,18 @@ ostream& operator<<(ostream& os, const Command& cmd) {
     return os;
 }
 
-/**
- * Get command name
- */
 CommandName Command::getCommandName() const {
     return *commandName;
 }
 
-/**
- * Get Effect
- */
 string Command::getEffect() const {
     return *effect;
 }
 
-/**
- * Get All Arguments
- */
 vector<string> Command::getArguments() const {
     return *arguments;
 }
 
-/**
- * Get Specific Argument
- */
 string Command::getArgument(int index) const {
     if (index >= 0 && index < arguments->size()) {
         return arguments->at(index);
@@ -236,47 +185,29 @@ string Command::getArgument(int index) const {
     return "";
 }
 
-/**
- * Get Number of Arguments
- */
 int Command::getNumArguments() const {
     return arguments->size();
 }
  
-/**
- * Save Effect — also notifies observers (triggers log write via LogObserver)
- */
+// notifies observers (triggers log write via LogObserver)
 void Command::saveEffect(const string& eff) {
     *effect = eff;
     notify();
 }
 
-/**
- * ILoggable: returns the saved effect for the game log
- */
+// returns the saved effect for gamelog.txt
 string Command::stringToLog() const {
     return "Command effect saved: " + *effect;
 }
 
-//----------------------------------------------------------
-// End of Command Implementation
-//----------------------------------------------------------
-
-//----------------------------------------------------------
-// Command Processor Implementation
-//----------------------------------------------------------
-
-/**
- * Default Constructor
- */
+// --- CommandProcessor ---
+// Constructor
 CommandProcessor::CommandProcessor() {
     commands = new deque<Command*>();
     currentIndex = new int(0);
 }
 
-/**
- * Copy Constructor - Deep copy
- */
+// Copy constructor
 CommandProcessor::CommandProcessor(const CommandProcessor& other) {
     commands = new deque<Command*>();
     
@@ -288,9 +219,7 @@ CommandProcessor::CommandProcessor(const CommandProcessor& other) {
     currentIndex = new int(*other.currentIndex);
 }
 
-/**
- * Destructor
- */
+// Destructor
 CommandProcessor::~CommandProcessor() {
     // Delete all commands
     for (Command* cmd : *commands) {
@@ -303,9 +232,7 @@ CommandProcessor::~CommandProcessor() {
     currentIndex = nullptr;
 }
 
-/**
- * Assignment Operator
- */
+// Assignment operator
 CommandProcessor& CommandProcessor::operator=(const CommandProcessor& other) {
     if (this == &other) {
         return *this;
@@ -327,18 +254,14 @@ CommandProcessor& CommandProcessor::operator=(const CommandProcessor& other) {
     return *this;
 }
 
-/**
- * Stream Insertion Operator
- */
+// Stream insertion operator
 ostream& operator<<(ostream& os, const CommandProcessor& cp) {
     os << "CommandProcessor [Total Commands: " << cp.commands->size() 
        << ", Current Index: " << *cp.currentIndex << "]";
     return os;
 }
 
-/**
- * Stream Insertion Operator
- */
+// Stream insertion operator
 ostream &operator<<(ostream &os, const FileCommandProcessorAdapter &adapter)
 {
     os << "FileCommandProcessorAdapter [";
@@ -349,9 +272,7 @@ ostream &operator<<(ostream &os, const FileCommandProcessorAdapter &adapter)
     return os;
 }
 
-/**
- * Add command to command history — also notifies observers (triggers log write via LogObserver)
- */
+// notifies observers (triggers log write via LogObserver)
 void CommandProcessor::saveCommand(Command* cmd) {
     if (cmd) {
         commands->push_back(cmd);
@@ -359,18 +280,13 @@ void CommandProcessor::saveCommand(Command* cmd) {
     }
 }
 
-/**
- * ILoggable: returns info about the most recently saved command for the game log
- */
+// returns info about the most recently saved command for gamelog.txt
 string CommandProcessor::stringToLog() const {
     if (commands->empty()) return "CommandProcessor: no commands saved";
     Command* last = commands->back();
     return "Command saved to CommandProcessor: " + commandNameToString(last->getCommandName());
 }
 
-/**
- * Reads a command from the console (can be overridden)
- */
 string CommandProcessor::readCommand() {
     cout << "Enter command: ";
     string input;
@@ -423,9 +339,6 @@ namespace {
     }
 }
 
-/**
- * Returns next command to execute
- */
 Command* CommandProcessor::getCommand() {
     // If no unread commands, read a new one
     if (*currentIndex >= commands->size()) {
@@ -457,12 +370,8 @@ Command* CommandProcessor::getCommand() {
     return cmd;
 }
 
-// Helper methods for the validate method
 namespace {
-    
-/**
-* Verifies the arguments of a command
-*/
+
 bool commandWellFormed(Command* cmd){
     
     if (!cmd) {
@@ -507,9 +416,6 @@ bool commandWellFormed(Command* cmd){
            
 }
 
-/**
-* Verifies the argument is valid given the current state
-*/
 bool commandValidInState(Command* cmd, GameState currentState){
 
     if (!cmd) {
@@ -571,7 +477,6 @@ bool commandValidInState(Command* cmd, GameState currentState){
 
 }
 
-
 bool CommandProcessor::validate(Command* cmd, GameState currentState) {
 
     if (commandWellFormed(cmd) && commandValidInState(cmd, currentState)){
@@ -582,41 +487,26 @@ bool CommandProcessor::validate(Command* cmd, GameState currentState) {
     return false;
 }
 
-//----------------------------------------------------------
-// End of Command Processor Implementation
-//----------------------------------------------------------
-
-//----------------------------------------------------------
-// File Command Processor Adapter Implementation
-//----------------------------------------------------------
-
-/**
- * Constructor - Takes filename and creates FileLineReader
- */
+// --- FileCommandProcessorAdapter ---
+// Constructor
 FileCommandProcessorAdapter::FileCommandProcessorAdapter(const string& filename)
     : CommandProcessor() {
     flr = new FileLineReader(filename);
 }
 
-/**
- * Copy Constructor - Deep copy
- */
+// Copy constructor
 FileCommandProcessorAdapter::FileCommandProcessorAdapter(const FileCommandProcessorAdapter& other)
     : CommandProcessor(other) {  // Call parent copy constructor
     flr = new FileLineReader(*other.flr);
 }
 
-/**
- * Destructor
- */
+// Destructor
 FileCommandProcessorAdapter::~FileCommandProcessorAdapter() {
     delete flr;
     flr = nullptr;
 }
 
-/**
- * Assignment Operator
- */
+// Assignment operator
 FileCommandProcessorAdapter& FileCommandProcessorAdapter::operator=(const FileCommandProcessorAdapter& other) {
     if (this == &other) {
         return *this;
@@ -632,18 +522,12 @@ FileCommandProcessorAdapter& FileCommandProcessorAdapter::operator=(const FileCo
     return *this;
 }
 
-/**
- * Verifies if the filestream is open
- */
 bool FileCommandProcessorAdapter::isOpen() const {
     return flr->isOpen();
 }
 
-/**
- * Read Command overriden
- */
+// reads from file instead of console
 string FileCommandProcessorAdapter::readCommand() {
-    // Read line from file using FileLineReader
     string line = flr->readLineFromFile();
     
     if (line.empty()) {
