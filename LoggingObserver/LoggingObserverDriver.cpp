@@ -1,11 +1,3 @@
-// Proof of each requirement:
-//  (1) Command, CommandProcessor, Order, OrdersList, GameEngine all inherit Subject + ILoggable
-//  (2) saveCommand(), execute(), saveEffect(), addOrder(), transition() call notify()
-//  (3) Commands entered on console (or via file) are logged to gamelog.txt
-//  (4) Adding an order to an OrdersList logs the order description
-//  (5) Executing an order logs the order effect
-//  (6) GameEngine state transitions are logged
-
 #include "LoggingObserver.h"
 #include "../CommandProcessor/CommandProcessing.h"
 #include "../Orders/Orders.h"
