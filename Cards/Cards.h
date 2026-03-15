@@ -33,7 +33,8 @@ public:
     Card& operator=(const Card& object);
     friend std::ostream& operator<<(std::ostream& outs, const Card& card);
     
-    void play(Deck* deck, Hand* hand);
+    // Included a pointer to the players to be able to create Negotiate orders
+    void play(Deck* deck, Hand* hand, const std::vector<Player*>* allPlayers = nullptr);
     
     // Getter
     CardType getType() const;

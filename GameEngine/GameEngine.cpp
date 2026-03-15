@@ -3,6 +3,7 @@
 #include "../Maps/Map.h"
 #include "../Players/Player.h"
 #include "../Cards/Cards.h"
+#include "../Orders/Orders.h"
 #include <cctype>
 #include <sstream>
 #include <algorithm>
@@ -185,19 +186,210 @@ void GameEngine::run() {
         return;
     }
 
-    startupPhase();
+    while (*state != GameState::End){
 
-    // Continue with play phase if startup completed successfully
-    if (*state == GameState::AssignReinforcement) {
-        cout << "\n--- Play phase (type quit to exit) ---" << endl;
-        while (true) {
-            if (!processNextCommand()) {
-                break;
-            }
+        startupPhase();
+
+        if (*state == GameState::AssignReinforcement) {
+            mainGameLoop();
+        }
+
+        //replay or quit
+        if (*state == GameState::Win){
+            endPhase();
         }
     }
 
     cout << "\nGame ended." << endl;
+}
+
+// ---------- Main game loop phases ----------
+
+/**
+ * Gives each player armies based on territories owned and continent bonuses. 
+ * Minimum 3 armies per turn.
+ */
+void GameEngine::reinforcementPhase() {
+    *state = GameState::AssignReinforcement;
+    cout << "\n========== REINFORCEMENT PHASE ==========" << endl;
+
+    for (Player* p : *players) {
+        int numTerritories = static_cast<int>(p->getTerritoriesOwned()->size());
+        int armies = max(3, numTerritories / 3);
+
+        // Check continent control bonuses
+        for (Continent& continent : *gameMap->getContinents()) {
+            vector<Territory*>* contTerritories = continent.getTerritories();
+            if (contTerritories->empty()) continue;
+            bool ownsAll = true;
+            for (Territory* t : *contTerritories) {
+                if (t->getOwner() != p) { ownsAll = false; break; }
+            }
+            if (ownsAll) {
+                cout << "  " << p->getName() << " controls continent '"
+                     << continent.getName() << "' (+"
+                     << continent.getBonusValue() << " bonus armies)" << endl;
+                armies += continent.getBonusValue();
+            }
+        }
+
+        p->addReinforcements(armies);
+        cout << "  " << p->getName() << ": " << numTerritories
+             << " territories -> +" << armies
+             << " armies (pool now: " << p->getReinforcementPool() << ")" << endl;
+    }
+}
+
+/**
+ * Players issue orders during their turm.
+ * Players deploy first, then advance and play cards.
+ */
+void GameEngine::issueOrdersPhase() {
+    *state = GameState::IssueOrders;
+    cout << "\n========== ISSUE ORDERS PHASE ==========" << endl;
+
+    // Reset each player's per-turn state
+    for (Player* p : *players) {
+        p->resetOrderIssuingState();
+    }
+
+    vector<bool> done(players->size(), false);
+    bool anyStillIssuing = true;
+
+    while (anyStillIssuing) {
+        anyStillIssuing = false;
+        for (size_t i = 0; i < players->size(); ++i) {
+            if (!done[i]) {
+                bool issued = (*players)[i]->issueOrder(deck, players);
+                if (issued) {
+                    anyStillIssuing = true;
+                } else {
+                    done[i] = true;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * - Executes all Deploy orders first before any other orders. 
+ * - Combat is handled inside Advance::execute(). 
+ * - At the end of the turn, any player who conquered at least one territory draws one card.
+ */
+void GameEngine::executeOrdersPhase() {
+    *state = GameState::ExecuteOrders;
+    cout << "\n========== EXECUTE ORDERS PHASE ==========" << endl;
+
+    // Execute all Deploy orders first
+    cout << "\n--- Executing Deploy orders ---" << endl;
+    bool anyDeploys = true;
+    while (anyDeploys) {
+        anyDeploys = false;
+        for (Player* p : *players) {
+            OrdersList* orders = p->getOrders();
+            for (int i = 0; i < orders->size(); ++i) {
+                if (orders->orderAt(i)->isDeploy()) {
+                    cout << "  [" << p->getName() << "] ";
+                    orders->orderAt(i)->execute();
+                    orders->remove(i);
+                    anyDeploys = true;
+                    break; // restart scan after removal
+                }
+            }
+        }
+    }
+
+    // Execute all other orders in round robin
+    cout << "\n--- Executing non-Deploy orders ---" << endl;
+    bool anyOrders = true;
+    while (anyOrders) {
+        anyOrders = false;
+        for (Player* p : *players) {
+            OrdersList* orders = p->getOrders();
+            if (orders->size() > 0) {
+                cout << "  [" << p->getName() << "] ";
+                orders->orderAt(0)->execute();
+                orders->remove(0);
+                anyOrders = true;
+            }
+        }
+    }
+
+    // Player who conquered at least one territory draws a card.
+    cout << "\n--- Awarding cards for conquests ---" << endl;
+    bool anyReward = false;
+    for (Player* p : *players) {
+        if (p->getConqueredThisTurn()) {
+            if (deck && !deck->getCards()->empty()) {
+                cout << "  " << p->getName()
+                     << " conquered territory this turn — drawing a card: ";
+                deck->draw(p->getHand());
+            }
+            p->setConqueredThisTurn(false);
+            anyReward = true;
+        }
+    }
+    if (!anyReward) {
+        cout << "  No territories conquered this round — no cards awarded." << endl;
+    }
+}
+
+/**
+ * Main game loop: repeats Reinforcement -> IssueOrders -> ExecuteOrders
+ * until one player owns all territories or only one player remains.
+ * Players with no territories are eliminated after each round.
+ */
+void GameEngine::mainGameLoop() {
+    cout << "\n========================================" << endl;
+    cout << "          MAIN GAME LOOP" << endl;
+    cout << "========================================" << endl;
+
+    int round = 0;
+    while (true) {
+        round++;
+        cout << "\n============== ROUND " << round << " ==============" << endl;
+
+        reinforcementPhase();
+        issueOrdersPhase();
+        executeOrdersPhase();
+
+        // Remove players with no territories
+        auto it = players->begin();
+        while (it != players->end()) {
+            if ((*it)->getTerritoriesOwned()->empty()) {
+                cout << "\n*** " << (*it)->getName()
+                     << " controls no territories and is eliminated! ***" << endl;
+                delete *it;
+                it = players->erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        // Check win condition: one player owns all territories
+        if (players->size() == 1) {
+            *state = GameState::Win;
+            cout << "\n========================================" << endl;
+            cout << "  WINNER: " << (*players)[0]->getName() << "!" << endl;
+            cout << "========================================" << endl;
+            return;
+        }
+        if (players->empty()) {
+            cout << "All players eliminated." << endl;
+            return;
+        }
+        int totalTerr = static_cast<int>(gameMap->getTerritories()->size());
+        for (Player* p : *players) {
+            if (static_cast<int>(p->getTerritoriesOwned()->size()) == totalTerr) {
+                *state = GameState::Win;
+                cout << "\n========================================" << endl;
+                cout << "  WINNER: " << p->getName()
+                     << " controls all " << totalTerr << " territories!" << endl;
+                cout << "========================================" << endl;
+                return;
+            }
+        }
+    }
 }
 
 /**
@@ -215,6 +407,7 @@ bool GameEngine::processNextCommand() {
     
     // Check for quit
     if (cmd->getCommandName() == CommandName::Quit) {
+        *state = GameState::End;
         cout << "\nQuitting game..." << endl;
         cmd->saveEffect("Game quit by user");
         return false;  // Stop game loop
@@ -482,6 +675,7 @@ bool GameEngine::gameStart(Command* cmd, GameState oldState) {
  * Runs the startup phase until the game transitions to AssignReinforcement.
  */
 void GameEngine::startupPhase() {
+    cout << "\n" << endl;
     cout << "========================================" << endl;
     cout << "        WARZONE - STARTUP PHASE" << endl;
     cout << "========================================" << endl;
@@ -515,4 +709,38 @@ void GameEngine::startupPhase() {
     }
     cout << "Game is ready - entering play phase." << endl;
     cout << "========================================" << endl;
+}
+
+/**
+ * Resets game data to start a new game
+ */
+void GameEngine::newGame(){
+    
+    for (Player* p : *players) {
+        delete p;
+    }
+
+    players->clear();
+
+    delete gameMap;
+    gameMap = nullptr;
+
+    delete deck;
+    deck = new Deck();
+
+}
+
+/**
+ * Runs the end phase i.e. replay or quit
+ */
+void GameEngine::endPhase(){
+
+    while(*state == GameState::Win){
+        cout << "\n(state: " << stateToString(*state) << ") ";
+        if (!processNextCommand()){
+            return;
+        }
+    }
+
+    newGame();
 }

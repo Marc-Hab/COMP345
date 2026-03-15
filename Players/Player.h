@@ -9,6 +9,7 @@
 class Territory;
 class Hand;
 class OrdersList;
+class Deck;
 
 class Player {
 private:
@@ -17,6 +18,11 @@ private:
     Hand* hand;
     OrdersList* ordersList;
     int* reinforcementPool;
+
+    // Data for each turn
+    int* ordersIssuedThisTurn;        // number of non-deploy orders issued this turn
+    std::vector<Player*>* negotiatedWith; // players who have been negotiated with
+    bool* conqueredThisTurn;          // true if a player conquered a territory this turn
 
 public:
     // Constructors, destructor, operator overloads
@@ -28,7 +34,10 @@ public:
     // Methods
     std::vector<Territory*> toDefend() const;
     std::vector<Territory*> toAttack() const;
-    void issueOrder();
+    // Returns true if an order was issued, false when done for the turn.
+    // allPlayers is needed to create Negotiate orders from Diplomacy cards.
+    bool issueOrder(Deck* deck, const std::vector<Player*>* allPlayers = nullptr);
+    void resetOrderIssuingState(); // resets the data before the start of each turn
 
     // Getters
     std::string getName() const;
@@ -36,10 +45,16 @@ public:
     std::vector<Territory*>* getTerritoriesOwned() const;
     Hand* getHand() const;
     int getReinforcementPool() const;
+    bool getConqueredThisTurn() const;
 
     // Setters
     void setReinforcementPool(int count);
     void addReinforcements(int count);
+    void setConqueredThisTurn(bool val);
+
+    // Negotiation helpers
+    void addNegotiation(Player* other);
+    bool hasNegotiatedWith(Player* other) const;
 
     // Operator Overload
     friend std::ostream& operator<<(std::ostream& out, const Player& p);
