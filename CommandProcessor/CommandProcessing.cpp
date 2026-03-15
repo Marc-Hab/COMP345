@@ -3,11 +3,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
 
 // --- FileLineReader ---
+// Constructor
 FileLineReader::FileLineReader(const string& filePath) {
     this->filePath = new string(filePath);
     this->fileStream = new ifstream(*this->filePath);
@@ -19,6 +21,7 @@ FileLineReader::FileLineReader(const string& filePath) {
     }
 }
 
+// Copy constructor
 FileLineReader::FileLineReader(const FileLineReader& other) {
     filePath = new string(*other.filePath);
     fileStream = new ifstream(*filePath);
@@ -29,6 +32,7 @@ FileLineReader::FileLineReader(const FileLineReader& other) {
     }
 }
 
+// Destructor
 FileLineReader::~FileLineReader() {
     if (fileStream) {
         if (fileStream->is_open()) {
@@ -39,6 +43,7 @@ FileLineReader::~FileLineReader() {
     delete filePath;
 }
 
+// Assignment operator
 FileLineReader& FileLineReader::operator=(const FileLineReader& other) {
     if (this == &other) return *this;
     
@@ -63,6 +68,7 @@ FileLineReader& FileLineReader::operator=(const FileLineReader& other) {
     return *this;
 }
 
+// Stream insertion operator
 ostream& operator<<(ostream& os, const FileLineReader& flr) {
     os << "FileLineReader [File: " << *flr.filePath;
     if (flr.fileStream && flr.fileStream->is_open()) {
@@ -95,24 +101,28 @@ string FileLineReader::readLineFromFile() {
 }
 
 // --- Command ---
+// Constructor
 Command::Command(CommandName cmdName) {
     commandName = new CommandName(cmdName);
     arguments = new vector<string>();
     effect = new string("");
 }
 
+// Constructor with arguments
 Command::Command(CommandName cmdName, const vector<string>& args) {
     commandName = new CommandName(cmdName);
     arguments = new vector<string>(args);
     effect = new string("");
 }
 
+// Copy constructor
 Command::Command(const Command& other) {
     commandName = new CommandName(*other.commandName);
     arguments = new vector<string>(*other.arguments);
     effect = new string(*other.effect);
 }
 
+// Destructor
 Command::~Command() {
     delete commandName;
     delete effect;
@@ -122,6 +132,7 @@ Command::~Command() {
     arguments = nullptr;
 }
 
+// Assignment operator
 Command& Command::operator=(const Command& other) {
     if (this == &other) {
         return *this;
@@ -135,6 +146,7 @@ Command& Command::operator=(const Command& other) {
     return *this;
 }
 
+// Stream insertion operator
 ostream& operator<<(ostream& os, const Command& cmd) {
     os << "Command: " << cmd.getCommandName();
     
@@ -189,11 +201,13 @@ string Command::stringToLog() const {
 }
 
 // --- CommandProcessor ---
+// Constructor
 CommandProcessor::CommandProcessor() {
     commands = new deque<Command*>();
     currentIndex = new int(0);
 }
 
+// Copy constructor
 CommandProcessor::CommandProcessor(const CommandProcessor& other) {
     commands = new deque<Command*>();
     
@@ -205,6 +219,7 @@ CommandProcessor::CommandProcessor(const CommandProcessor& other) {
     currentIndex = new int(*other.currentIndex);
 }
 
+// Destructor
 CommandProcessor::~CommandProcessor() {
     // Delete all commands
     for (Command* cmd : *commands) {
@@ -217,6 +232,7 @@ CommandProcessor::~CommandProcessor() {
     currentIndex = nullptr;
 }
 
+// Assignment operator
 CommandProcessor& CommandProcessor::operator=(const CommandProcessor& other) {
     if (this == &other) {
         return *this;
@@ -238,12 +254,14 @@ CommandProcessor& CommandProcessor::operator=(const CommandProcessor& other) {
     return *this;
 }
 
+// Stream insertion operator
 ostream& operator<<(ostream& os, const CommandProcessor& cp) {
     os << "CommandProcessor [Total Commands: " << cp.commands->size() 
        << ", Current Index: " << *cp.currentIndex << "]";
     return os;
 }
 
+// Stream insertion operator
 ostream &operator<<(ostream &os, const FileCommandProcessorAdapter &adapter)
 {
     os << "FileCommandProcessorAdapter [";
@@ -470,21 +488,25 @@ bool CommandProcessor::validate(Command* cmd, GameState currentState) {
 }
 
 // --- FileCommandProcessorAdapter ---
+// Constructor
 FileCommandProcessorAdapter::FileCommandProcessorAdapter(const string& filename)
     : CommandProcessor() {
     flr = new FileLineReader(filename);
 }
 
+// Copy constructor
 FileCommandProcessorAdapter::FileCommandProcessorAdapter(const FileCommandProcessorAdapter& other)
     : CommandProcessor(other) {  // Call parent copy constructor
     flr = new FileLineReader(*other.flr);
 }
 
+// Destructor
 FileCommandProcessorAdapter::~FileCommandProcessorAdapter() {
     delete flr;
     flr = nullptr;
 }
 
+// Assignment operator
 FileCommandProcessorAdapter& FileCommandProcessorAdapter::operator=(const FileCommandProcessorAdapter& other) {
     if (this == &other) {
         return *this;
