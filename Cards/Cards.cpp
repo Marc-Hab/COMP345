@@ -1,6 +1,7 @@
 #include "Cards.h"
 #include "../Orders/Orders.h"
 #include "../Players/Player.h"
+#include "../Maps/Map.h"
 #include <algorithm>
 #include <random>
 
@@ -75,40 +76,76 @@ CardType Card::getType() const {
 }
 
 
-void Card::play(Deck* deck, Hand* hand) {
+void Card::play(Deck* deck, Hand* hand, const std::vector<Player*>* allPlayers) {
 
-    if (hand->getPlayer() == nullptr ){ return; }
+    if (hand->getPlayer() == nullptr) { return; }
 
-    // Remove card from hand 
+    // Remove card from hand
     Card* removedCard = hand->removeCard(this);
 
     // If card was not in hand, don't do anything
-    if (removedCard == nullptr){ return; }
+    if (removedCard == nullptr) { return; }
 
+    Player* player = hand->getPlayer();
     Order* newOrder = nullptr;
 
     switch (*type) {
-        case CardType::BOMB:
-            newOrder = new Bomb();
+        case CardType::BOMB: {
+            // Bomb the weakest adjacent enemy territory
+            auto attack = player->toAttack();
+            if (!attack.empty()) {
+                newOrder = new Bomb(player, attack[0]);
+            }
             break;
-        case CardType::REINFORCEMENT:
-            newOrder = new Deploy();
+        }
+        case CardType::REINFORCEMENT: {
+            // Deploy 5 bonus armies to the weakest owned territory
+            auto defend = player->toDefend();
+            if (!defend.empty()) {
+                newOrder = new Deploy(player, defend[0], 5);
+            }
             break;
-        case CardType::BLOCKADE:
-            newOrder = new Blockade();
+        }
+        case CardType::BLOCKADE: {
+            // Blockade the weakest owned territory
+            auto defend = player->toDefend();
+            if (!defend.empty()) {
+                newOrder = new Blockade(player, defend[0]);
+            }
             break;
-        case CardType::AIRLIFT:
-            newOrder = new Airlift();
+        }
+        case CardType::AIRLIFT: {
+            // Airlift half the armies from the strongest territory to the weakest
+            auto defend = player->toDefend(); // sorted ascending
+            if (defend.size() >= 2) {
+                Territory* src = defend.back();  // strongest
+                Territory* tgt = defend[0];      // weakest
+                int armies = src->getArmyCount() / 2;
+                if (armies > 0) {
+                    newOrder = new Airlift(player, src, tgt, armies);
+                }
+            }
             break;
-        case CardType::DIPLOMACY:
-            newOrder = new Negotiate();
+        }
+        case CardType::DIPLOMACY: {
+            // Negotiate with a random enemy player
+            if (allPlayers != nullptr) {
+                for (Player* other : *allPlayers) {
+                    if (other != player) {
+                        newOrder = new Negotiate(player, other);
+                        break;
+                    }
+                }
+            }
             break;
+        }
     }
 
-    // Add order to the player's orders list
-    hand->getPlayer()->getOrders()->addOrder(newOrder);
-    
-    // Add card back to deck
+    if (newOrder != nullptr) {
+        player->getOrders()->addOrder(newOrder);
+    }
+
+    // Return card to deck
     deck->addCard(removedCard);
 }
 

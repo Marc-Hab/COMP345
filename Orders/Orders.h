@@ -17,12 +17,13 @@ class Order {
 public:
     Order();
     Order(const Order& other);
-    virtual ~Order(); // Trying out virtual destructor
+    virtual ~Order();
     Order& operator=(const Order& other);
 
     virtual bool validate() const = 0;
     virtual void execute() = 0;
-    virtual Order* clone() const = 0; // Doing a deep copy
+    virtual Order* clone() const = 0;
+    virtual bool isDeploy() const { return false; }
 
 protected:
     std::string* effect;
@@ -32,24 +33,28 @@ private:
     virtual void print(std::ostream& os) const = 0;
 };
 
-// Classes for each type of Order
-
+// Deploy: move armies from reinforcement pool to an owned territory
 class Deploy : public Order {
 public:
-    Deploy();
+    Deploy(Player* issuer, Territory* target, int armies);
     Deploy(const Deploy& other);
     ~Deploy();
     Deploy& operator=(const Deploy& other);
     bool validate() const override;
     void execute() override;
     Deploy* clone() const override;
+    bool isDeploy() const override { return true; }
 private:
     void print(std::ostream& os) const override;
+    Player*    issuer;  // non-owning
+    Territory* target;  // non-owning
+    int*       armies;  // owning
 };
 
+// Advance: move armies from source to adjacent target (defend or attack)
 class Advance : public Order {
 public:
-    Advance();
+    Advance(Player* issuer, Territory* source, Territory* target, int armies);
     Advance(const Advance& other);
     ~Advance();
     Advance& operator=(const Advance& other);
@@ -58,11 +63,16 @@ public:
     Advance* clone() const override;
 private:
     void print(std::ostream& os) const override;
+    Player*    issuer;  // non-owning
+    Territory* source;  // non-owning
+    Territory* target;  // non-owning
+    int*       armies;  // owning
 };
 
+// Bomb: remove half the armies from an adjacent enemy territory (requires Bomb card)
 class Bomb : public Order {
 public:
-    Bomb();
+    Bomb(Player* issuer, Territory* target);
     Bomb(const Bomb& other);
     ~Bomb();
     Bomb& operator=(const Bomb& other);
@@ -71,11 +81,14 @@ public:
     Bomb* clone() const override;
 private:
     void print(std::ostream& os) const override;
+    Player*    issuer;  // non-owning
+    Territory* target;  // non-owning
 };
 
+// Blockade: double armies on own territory and transfer it to the Neutral player (requires Blockade card)
 class Blockade : public Order {
 public:
-    Blockade();
+    Blockade(Player* issuer, Territory* target);
     Blockade(const Blockade& other);
     ~Blockade();
     Blockade& operator=(const Blockade& other);
@@ -84,11 +97,14 @@ public:
     Blockade* clone() const override;
 private:
     void print(std::ostream& os) const override;
+    Player*    issuer;  // non-owning
+    Territory* target;  // non-owning
 };
 
+// Airlift: move armies between two owned territories regardless of adjacency (requires Airlift card)
 class Airlift : public Order {
 public:
-    Airlift();
+    Airlift(Player* issuer, Territory* source, Territory* target, int armies);
     Airlift(const Airlift& other);
     ~Airlift();
     Airlift& operator=(const Airlift& other);
@@ -97,11 +113,16 @@ public:
     Airlift* clone() const override;
 private:
     void print(std::ostream& os) const override;
+    Player*    issuer;  // non-owning
+    Territory* source;  // non-owning
+    Territory* target;  // non-owning
+    int*       armies;  // owning
 };
 
+// Negotiate: prevent attacks between issuer and target player for the remainder of the turn (requires Diplomacy card)
 class Negotiate : public Order {
 public:
-    Negotiate();
+    Negotiate(Player* issuer, Player* targetPlayer);
     Negotiate(const Negotiate& other);
     ~Negotiate();
     Negotiate& operator=(const Negotiate& other);
@@ -110,6 +131,8 @@ public:
     Negotiate* clone() const override;
 private:
     void print(std::ostream& os) const override;
+    Player* issuer;        // non-owning
+    Player* targetPlayer;  // non-owning
 };
 
 
@@ -129,7 +152,6 @@ public:
     Order* orderAt(int index) const;
 
 private:
-    // This is a pointer to a vector of Order pointers, as per the assignment requirements.
     std::vector<Order*>* orders;
 
     friend std::ostream& operator<<(std::ostream& os, const OrdersList& list);

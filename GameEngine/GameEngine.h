@@ -74,6 +74,9 @@ private:
     bool addPlayer(Command* cmd, GameState oldState);
     bool gameStart(Command* cmd, GameState oldState);
 
+    // Resets game data to start a new game
+    void newGame();
+
     // Print available map files
     void listAvailableMaps() const;
 
@@ -87,7 +90,18 @@ public:
     // Startup phase: loadmap -> validatemap -> addplayer(s) -> gamestart
     void startupPhase();
 
-    // Game loop
+    // end phase: win -> start || win -> end
+    void endPhase();
+
+    // Main game loop (called after startupPhase)
+    void mainGameLoop();
+
+    // Individual game loop phases (also callable directly for testing/demo)
+    void reinforcementPhase();
+    void issueOrdersPhase();
+    void executeOrdersPhase();
+
+    // Game loop (startup + main loop)
     void run();
 
     // Process single command
