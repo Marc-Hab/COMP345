@@ -1,26 +1,47 @@
 #include "GameEngine.h"
+#include "../CommandProcessor/CommandProcessing.h"
 #include <iostream>
 #include <string>
 
-int main() {
-    GameEngine engine;
+int main(int argc, char* argv[]) {
 
-    std::cout << "=== GameEngine FSM Driver ===\n";
-    std::cout << "Type commands (you can include args, e.g., 'loadmap map1.txt')\n";
-    std::cout << "Commands: loadmap, validatemap, addplayer, assigncountries,\n";
-    std::cout << "          issueorder, endissueorders, execorder, endexecorders,\n";
-    std::cout << "          win, play, quit\n\n";
-
-    std::string input;
-    while (true) {
-        std::cout << engine << "\n> ";
-        std::getline(std::cin, input);
-
-        if (!engine.applyCommand(input)) {
-            break;
+    CommandProcessor* processor = nullptr;
+    
+    //Check command line arguments to determine which command processor to use
+    if (argc < 2) {
+        // Default to console
+        processor = new CommandProcessor();
+    }
+    else if (strcmp(argv[1], "-console") == 0) {
+        processor = new CommandProcessor();
+    }
+    else if (strcmp(argv[1], "-file") == 0) {
+        
+        if (argc < 3) {
+            cout << "ERROR: -file requires a filename" << endl;
+            cout << "Usage: " << argv[0] << " -file <filename>" << endl;
+            return 1;
         }
+
+        processor = new FileCommandProcessorAdapter(argv[2]);
+    }
+    else {
+        processor = new CommandProcessor();
     }
 
-    std::cout << "Driver ended.\n";
+    // Check if file opened successfully
+    FileCommandProcessorAdapter* fileProcessor = dynamic_cast<FileCommandProcessorAdapter*>(processor);
+    if (fileProcessor && !fileProcessor->isOpen()) {
+        cout << "ERROR: Could not open file '" << argv[2] << "'" << endl;
+        cout << "Please check that the file exists and is readable." << endl;
+        delete fileProcessor;
+        return 1;
+    }
+    
+    GameEngine* engine = new GameEngine(processor);
+    engine->run();
+    
+    delete engine;
+    
     return 0;
 }

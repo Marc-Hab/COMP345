@@ -6,6 +6,10 @@
 #include <string>
 #include <utility>
 
+// forward declarations
+class CommandProcessor;
+class Command;
+
 enum class GameState {
     Start,
     MapLoaded,
@@ -18,48 +22,58 @@ enum class GameState {
     End
 };
 
-enum class GameCommand {
+// Free function to convert state to string
+std::string stateToString(GameState s);
+
+enum class CommandName {
     LoadMap,
     ValidateMap,
     AddPlayer,
-    AssignCountries,
+    GameStart,
     IssueOrder,
     EndIssueOrders,
     ExecOrder,
     EndExecOrders,
     WinCmd,
-    Play,
+    Replay,
     Quit,
     Invalid
 };
+
+// Free function to convert CommandName to string
+std::string commandNameToString(CommandName c);
+
+// Free function to convert string to CommandName
+CommandName parseCommandName(const std::string& input);
 
 class GameEngine {
 private:
     GameState* state; // pointer to satisfy rubric requirement
 
-    std::map<std::pair<GameState, GameCommand>, GameState> transitions;
-    std::map<std::string, GameCommand> commandLookup;
+    CommandProcessor* cmdProcessor;
 
-    void buildCommandLookup();
+    std::map<std::pair<GameState, CommandName>, GameState> transitions;
+
     void buildTransitions();
 
     void clear();
     void copyFrom(const GameEngine& other);
 
-    GameCommand parseCommand(const std::string& input) const;
-
-    static std::string stateToString(GameState s);
-    static std::string commandToString(GameCommand c);
-
 public:
     GameEngine();
+    GameEngine(CommandProcessor* proc);
     GameEngine(const GameEngine& other);
     GameEngine& operator=(const GameEngine& other);
     ~GameEngine();
 
-    // Applies one command: validates using the transition map; changes state if valid.
-    // Returns false when the engine should stop (End).
-    bool applyCommand(const std::string& input);
+    // Main game loop
+    void run();
+    
+    // Process single command
+    bool processNextCommand();
+    
+    // Apply validated command (transitions state)
+    void applyCommand(Command* cmd);
 
     GameState getState() const;
 

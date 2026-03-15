@@ -1,0 +1,12 @@
+loadmap
+validatemap
+loadmap canada.map
+addplayer
+addplayer Alice Bob
+loadmap canada.map
+validatemap
+addplayer Alice
+gamestart
+validatemap
+issueorder
+quit

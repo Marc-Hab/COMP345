@@ -1,82 +1,121 @@
 #pragma once
-#include "CommandProcessor/CommandProcessing.h"
-#include "GameEngine/GameEngine.h"
 #include <iostream>
-# include <string>
-# include <list>
-# include <fstream>
+#include <string>
+#include <deque>
+#include <fstream>
+
+using namespace std;
+
+//Forward declarations
+class Command;
+enum class GameState;
+enum class CommandName;
 
 class FileLineReader {
 public:
-    FileLineReader();
+    // Constructors
+    FileLineReader(const string& filePath);
     FileLineReader(const FileLineReader& other);
-    FileLineReader& operator=(const FileLineReader& other);
-    friend std::ostream& operator<<(std::ostream& os, const FileLineReader& flr);
-    ~FileLineReader();
 
-    std::string readLineFromFile(std::ifstream& file); 
+    // Destructor
+    ~FileLineReader();
+    
+    // Assignment and stream insertion operator
+    FileLineReader& operator=(const FileLineReader& other);
+    friend ostream& operator<<(ostream& os, const FileLineReader& flr);
+
+    bool isOpen() const;
+
+    string readLineFromFile();
 
 private:
-    std::ifstream* fileStream; 
+    const string* filePath;
+    ifstream* fileStream; 
+};
 
+class Command {
+public:
+    // Constructors
+    Command(CommandName cmdName);
+    Command(CommandName cmdName, const vector<string>& args); 
+    Command(const Command& other);
+
+    //Destructor
+    ~Command();
+    
+    // Assignment and stream insertion operator
+    Command& operator=(const Command& other);
+    friend ostream& operator<<(ostream& os, const Command& cmd);
+
+    // Getters
+    CommandName getCommandName() const;
+    string getEffect() const;
+
+    vector<string> getArguments() const;
+    string getArgument(int index) const;
+    int getNumArguments() const;
+
+    void saveEffect(const string& effect); 
+
+private:
+    CommandName* commandName; 
+    vector<string>* arguments;
+    string* effect;  
+};
+
+
+class CommandProcessor {
+    
+public:
+    // Constructors
+    CommandProcessor();
+    CommandProcessor(const CommandProcessor& other);
+
+    // Destructor 
+    virtual ~CommandProcessor(); 
+    
+    // Assignment and stream insertion operator
+    CommandProcessor& operator=(const CommandProcessor& other);
+    friend ostream& operator<<(ostream& os, const CommandProcessor& cp);
+          
+    Command* getCommand();
+    
+    bool validate(Command* command, GameState state);
+
+    
+
+        
+protected:
+    virtual string readCommand();
+    deque<Command*>* commands; 
+    int* currentIndex;
+    
+private:
+    void saveCommand(Command* cmd);
+    
 };
 
 
 class FileCommandProcessorAdapter : public CommandProcessor {
 public:
-    FileCommandProcessorAdapter(std::string filename);
+    // Constructors
+    FileCommandProcessorAdapter(const string& filename);
     FileCommandProcessorAdapter(const FileCommandProcessorAdapter& other);
-    FileCommandProcessorAdapter& operator=(const FileCommandProcessorAdapter& other);
-    friend std::ostream& operator<<(std::ostream& os, const FileCommandProcessorAdapter& adapter);
+    
+    // Destructor
     ~FileCommandProcessorAdapter();
+    
+    // Assignment and stream insertion operator
+    FileCommandProcessorAdapter& operator=(const FileCommandProcessorAdapter& other);
+    friend ostream& operator<<(ostream& os, const FileCommandProcessorAdapter& adapter);
+
+    bool isOpen() const;
+    
 
 protected:
     // This overrides the CommandProcessor's version to read from a file instead
-    Command* readCommand() override; 
+    string readCommand() override;
 
 private:
-    FileLineReader* flr;          
-    std::ifstream* filestream; 
-};
-
-class Command {
-public:
-    Command(std::string cmd);
-    // Orthodox Canonical Form requirements
-    Command(const Command& other);
-    Command& operator=(const Command& other);
-    friend std::ostream& operator<<(std::ostream& os, const Command& cmd);
-    ~Command();
-
-    void saveEffect(std::string effect);
-    std::string getCommandNameText();
-    std::string getEffect();
-
-private:
-    std::string* command; 
-    std::string* effect;  
-};
-class CommandProcessor {
-    std::string *command;
-    public:
-        CommandProcessor();
-        CommandProcessor(const CommandProcessor& other);
-        CommandProcessor& operator=(const CommandProcessor& other);
-        friend std::ostream& operator<<(std::ostream& os, const CommandProcessor& cp);
-
-        virtual ~CommandProcessor();       
-
-        Command* getCommand();
-        
-        bool validate(Command* command,std::string state);
-
-        
-   protected:
-    virtual Command* readCommand(); 
-
-    private:
-    void saveCommand(Command* cmd);
-    std::list<Command*>* commands; 
-
-
+    FileLineReader* flr;
 };

@@ -1,0 +1,28 @@
+loadmap canada.map
+validatemap
+addplayer Alice
+addplayer Bob
+addplayer Charlie
+gamestart
+issueorder
+issueorder
+issueorder
+endissueorders
+execorder
+execorder
+endexecorders
+issueorder
+issueorder
+endissueorders
+execorder
+win
+replay
+loadmap europe.map
+validatemap
+addplayer David
+gamestart
+issueorder
+endissueorders
+execorder
+win
+quit
