@@ -3,6 +3,7 @@
 #include <string>
 #include <deque>
 #include <fstream>
+#include "../LoggingObserver/LoggingObserver.h"
 
 using namespace std;
 
@@ -33,7 +34,7 @@ private:
     ifstream* fileStream; 
 };
 
-class Command {
+class Command : public Subject, public ILoggable {
 public:
     // Constructors
     Command(CommandName cmdName);
@@ -55,7 +56,10 @@ public:
     string getArgument(int index) const;
     int getNumArguments() const;
 
-    void saveEffect(const string& effect); 
+    void saveEffect(const string& effect);
+
+    // returns the effect string for gamelog.txt
+    string stringToLog() const override;
 
 private:
     CommandName* commandName; 
@@ -64,8 +68,8 @@ private:
 };
 
 
-class CommandProcessor {
-    
+class CommandProcessor : public Subject, public ILoggable {
+
 public:
     // Constructors
     CommandProcessor();
@@ -79,12 +83,12 @@ public:
     friend ostream& operator<<(ostream& os, const CommandProcessor& cp);
           
     Command* getCommand();
-    
+
     bool validate(Command* command, GameState state);
 
-    
+    // returns info about the most recently saved command
+    string stringToLog() const override;
 
-        
 protected:
     virtual string readCommand();
     deque<Command*>* commands; 

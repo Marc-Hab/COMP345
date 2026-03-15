@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "../LoggingObserver/LoggingObserver.h"
 
 // forward declarations
 class CommandProcessor;
@@ -50,7 +51,7 @@ std::string commandNameToString(CommandName c);
 // Free function to convert string to CommandName
 CommandName parseCommandName(const std::string& input);
 
-class GameEngine {
+class GameEngine : public Subject, public ILoggable {
 private:
     GameState* state; // pointer to satisfy rubric requirement
 
@@ -68,11 +69,11 @@ private:
     void copyFrom(const GameEngine& other);
 
     // Startup action handlers
-    bool executeCommand(Command* cmd, GameState oldState);
-    bool loadMap(Command* cmd, GameState oldState);
-    bool validateMap(Command* cmd, GameState oldState);
-    bool addPlayer(Command* cmd, GameState oldState);
-    bool gameStart(Command* cmd, GameState oldState);
+    bool executeCommand(Command* cmd);
+    bool loadMap(Command* cmd);
+    bool validateMap(Command* cmd);
+    bool addPlayer(Command* cmd);
+    bool gameStart(Command* cmd);
 
     // Resets game data to start a new game
     void newGame();
@@ -109,6 +110,12 @@ public:
 
     // Apply validated command to transition state
     void applyCommand(Command* cmd);
+
+    // Transitions to newState and notifies observers
+    void transition(GameState newState);
+
+    // returns the current state for the game log
+    std::string stringToLog() const override;
 
     GameState getState() const;
     std::vector<Player*>* getPlayers() const;

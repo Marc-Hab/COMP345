@@ -7,13 +7,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "../LoggingObserver/LoggingObserver.h"
 
 // FORWARD DECLARATIONS
 class Player;
 class Territory;
 
 // Base class for all orders
-class Order {
+class Order : public Subject, public ILoggable {
 public:
     Order();
     Order(const Order& other);
@@ -24,6 +25,9 @@ public:
     virtual void execute() = 0;
     virtual Order* clone() const = 0;
     virtual bool isDeploy() const { return false; }
+
+    //returns the order effect for the game log
+    std::string stringToLog() const override;
 
 protected:
     std::string* effect;
@@ -137,7 +141,7 @@ private:
 
 
 // A class to hold a list of orders.
-class OrdersList {
+class OrdersList : public Subject, public ILoggable {
 public:
     OrdersList();
     OrdersList(const OrdersList& other);
@@ -150,6 +154,9 @@ public:
     void executeAll();
     int size() const;
     Order* orderAt(int index) const;
+
+    // returns a description of the most recently added order
+    std::string stringToLog() const override;
 
 private:
     std::vector<Order*>* orders;

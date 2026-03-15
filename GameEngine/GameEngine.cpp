@@ -210,7 +210,7 @@ void GameEngine::run() {
  * Minimum 3 armies per turn.
  */
 void GameEngine::reinforcementPhase() {
-    *state = GameState::AssignReinforcement;
+    transition(GameState::AssignReinforcement);
     cout << "\n========== REINFORCEMENT PHASE ==========" << endl;
 
     for (Player* p : *players) {
@@ -245,7 +245,7 @@ void GameEngine::reinforcementPhase() {
  * Players deploy first, then advance and play cards.
  */
 void GameEngine::issueOrdersPhase() {
-    *state = GameState::IssueOrders;
+    transition(GameState::IssueOrders);
     cout << "\n========== ISSUE ORDERS PHASE ==========" << endl;
 
     // Reset each player's per-turn state
@@ -277,7 +277,7 @@ void GameEngine::issueOrdersPhase() {
  * - At the end of the turn, any player who conquered at least one territory draws one card.
  */
 void GameEngine::executeOrdersPhase() {
-    *state = GameState::ExecuteOrders;
+    transition(GameState::ExecuteOrders);
     cout << "\n========== EXECUTE ORDERS PHASE ==========" << endl;
 
     // Execute all Deploy orders first
@@ -368,7 +368,7 @@ void GameEngine::mainGameLoop() {
 
         // Check win condition: one player owns all territories
         if (players->size() == 1) {
-            *state = GameState::Win;
+            transition(GameState::Win);
             cout << "\n========================================" << endl;
             cout << "  WINNER: " << (*players)[0]->getName() << "!" << endl;
             cout << "========================================" << endl;
@@ -381,7 +381,7 @@ void GameEngine::mainGameLoop() {
         int totalTerr = static_cast<int>(gameMap->getTerritories()->size());
         for (Player* p : *players) {
             if (static_cast<int>(p->getTerritoriesOwned()->size()) == totalTerr) {
-                *state = GameState::Win;
+                transition(GameState::Win);
                 cout << "\n========================================" << endl;
                 cout << "  WINNER: " << p->getName()
                      << " controls all " << totalTerr << " territories!" << endl;
@@ -407,7 +407,7 @@ bool GameEngine::processNextCommand() {
     
     // Check for quit
     if (cmd->getCommandName() == CommandName::Quit) {
-        *state = GameState::End;
+        transition(GameState::End);
         cout << "\nQuitting game..." << endl;
         cmd->saveEffect("Game quit by user");
         return false;  // Stop game loop
@@ -446,19 +446,36 @@ void GameEngine::applyCommand(Command* cmd) {
     }
 
     GameState oldState = *state;
-    *state = it->second;
 
     // Execute the game action (may revert state on failure)
-    bool actionOk = executeCommand(cmd, oldState);
+    bool actionOk = executeCommand(cmd);
     if (!actionOk) {
         cmd->saveEffect("ERROR: Action failed, state reverted to " + stateToString(*state));
         return;
     }
 
+    transition(it->second);
+
     // Print transition
     cout << "[" << stateToString(oldState) << " -> " << stateToString(*state) << "]" << endl;
     cmd->saveEffect("Transition successful: " + stateToString(oldState) +
                     " -> " + stateToString(*state));
+}
+
+/**
+ * Transitions to a new state and notifies all attached observers.
+ * Used only for meaningful state changes (not rollbacks).
+ */
+void GameEngine::transition(GameState newState) {
+    *state = newState;
+    notify();
+}
+
+/**
+ * Returns the current state name for the game log
+ */
+std::string GameEngine::stringToLog() const {
+    return "GameEngine state changed to: " + stateToString(*state);
 }
 
 GameState GameEngine::getState() const {
@@ -514,12 +531,12 @@ void GameEngine::listAvailableMaps() const {
  * Delegates to the appropriate startup action handler
  * Returns true if command was executed successfully
  */
-bool GameEngine::executeCommand(Command* cmd, GameState oldState) {
+bool GameEngine::executeCommand(Command* cmd) {
     switch (cmd->getCommandName()) {
-        case CommandName::LoadMap:    return loadMap(cmd, oldState);
-        case CommandName::ValidateMap: return validateMap(cmd, oldState);
-        case CommandName::AddPlayer:  return addPlayer(cmd, oldState);
-        case CommandName::GameStart:  return gameStart(cmd, oldState);
+        case CommandName::LoadMap:    return loadMap(cmd);
+        case CommandName::ValidateMap: return validateMap(cmd);
+        case CommandName::AddPlayer:  return addPlayer(cmd);
+        case CommandName::GameStart:  return gameStart(cmd);
         default: return true; // no extra action for play-phase commands
     }
 }
@@ -528,7 +545,7 @@ bool GameEngine::executeCommand(Command* cmd, GameState oldState) {
  * Load map from file.
  * Tries the given name first, then looks in the map files directory.
  */
-bool GameEngine::loadMap(Command* cmd, GameState oldState) {
+bool GameEngine::loadMap(Command* cmd) {
     string filename = cmd->getArgument(0);
 
     Map* newMap = MapLoader::getInstance().loadMap(filename);
@@ -537,7 +554,6 @@ bool GameEngine::loadMap(Command* cmd, GameState oldState) {
     }
     if (!newMap) {
         cout << "ERROR: Could not load map '" << filename << "'. Check the filename and try again." << endl;
-        *state = oldState;
         return false;
     }
 
@@ -552,10 +568,9 @@ bool GameEngine::loadMap(Command* cmd, GameState oldState) {
 /**
  * Validate the currently loaded map.
  */
-bool GameEngine::validateMap(Command* cmd, GameState oldState) {
+bool GameEngine::validateMap(Command* cmd) {
     if (!gameMap) {
         cout << "ERROR: No map loaded." << endl;
-        *state = oldState;
         return false;
     }
     if (!gameMap->validate()) {
@@ -570,10 +585,9 @@ bool GameEngine::validateMap(Command* cmd, GameState oldState) {
 /**
  * Add a player to the game (max 6).
  */
-bool GameEngine::addPlayer(Command* cmd, GameState oldState) {
+bool GameEngine::addPlayer(Command* cmd) {
     if (players->size() >= 6) {
         cout << "ERROR: Maximum 6 players allowed." << endl;
-        *state = oldState;
         return false;
     }
 
@@ -582,7 +596,6 @@ bool GameEngine::addPlayer(Command* cmd, GameState oldState) {
     for (Player* p : *players) {
         if (p->getName() == playerName) {
             cout << "ERROR: A player named '" << playerName << "' already exists." << endl;
-            *state = oldState;
             return false;
         }
     }
@@ -600,18 +613,16 @@ bool GameEngine::addPlayer(Command* cmd, GameState oldState) {
  *   b) Randomise player order
  *   c) Give each player 50 armies in their reinforcement pool
  *   d) Each player draws 2 cards from the deck
- *   e) Transition to AssignReinforcement (already done before this call)
+ *   e) Transition to AssignReinforcement
  */
-bool GameEngine::gameStart(Command* cmd, GameState oldState) {
+bool GameEngine::gameStart(Command* cmd) {
     if (players->size() < 2 || players->size() > 6) {
         cout << "ERROR: Need 2-6 players to start (currently "
              << players->size() << ")." << endl;
-        *state = oldState;
         return false;
     }
     if (!gameMap) {
         cout << "ERROR: No map loaded." << endl;
-        *state = oldState;
         return false;
     }
 
@@ -665,7 +676,7 @@ bool GameEngine::gameStart(Command* cmd, GameState oldState) {
 
     // e) State already set to AssignReinforcement by applyCommand
     cout << "\n--- (e) Switching to play phase ---" << endl;
-    cout << "  Game state: " << stateToString(*state) << endl;
+    cout << "  Game state: " << stateToString(GameState::AssignReinforcement) << endl;
 
     return true;
 }
