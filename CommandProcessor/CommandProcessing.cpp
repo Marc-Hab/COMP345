@@ -414,7 +414,8 @@ Command* CommandProcessor::getCommand() {
         string cmdStr = readCommand();
         
         if (cmdStr.empty()) {
-            return nullptr;
+            cout << "Please enter a command." << cmdStr << endl;
+            return new Command(CommandName::Invalid);
         }
         
         // Parse command string (gets name + arguments)
@@ -423,7 +424,7 @@ Command* CommandProcessor::getCommand() {
         // Check if valid
         if (parsed.name == CommandName::Invalid) {
             cout << "Invalid command: " << cmdStr << endl;
-            return nullptr;
+            return new Command(CommandName::Invalid);
         }
         
         // Create command with arguments
@@ -479,7 +480,6 @@ bool commandWellFormed(Command* cmd){
             return true;
             
         case CommandName::Invalid:
-            cmd->saveEffect("ERROR: Invalid command");
             return false;
             
         default:

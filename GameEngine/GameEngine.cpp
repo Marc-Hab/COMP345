@@ -193,7 +193,10 @@ bool GameEngine::processNextCommand() {
     // Validate command
     if (!cmdProcessor->validate(cmd, *state)) {
         // Validation failed - effect contains error message
-        cout << cmd->getEffect() << endl;
+        string error = cmd->getEffect();
+        if (!error.empty()){
+            cout << cmd->getEffect() << endl;
+        }
         return true;  // Continue, try next command
     }
     
