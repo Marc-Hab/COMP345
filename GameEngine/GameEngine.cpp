@@ -495,7 +495,7 @@ void GameEngine::startupPhase() {
     listAvailableMaps();
 
     while (*state != GameState::AssignReinforcement) {
-        cout << "(state: " << stateToString(*state) << ") ";
+        cout << "\n(state: " << stateToString(*state) << ") ";
         if (!processNextCommand()) {
             return; // quit
         }
