@@ -1,0 +1,3 @@
+loadmap canada.map
+validatemap
+addplayer Alice

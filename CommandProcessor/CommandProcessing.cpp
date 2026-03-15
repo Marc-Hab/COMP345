@@ -244,10 +244,18 @@ int Command::getNumArguments() const {
 }
  
 /**
- * Save Effect
+ * Save Effect — also notifies observers (triggers log write via LogObserver)
  */
 void Command::saveEffect(const string& eff) {
     *effect = eff;
+    notify();
+}
+
+/**
+ * ILoggable: returns the saved effect for the game log
+ */
+string Command::stringToLog() const {
+    return "Command effect saved: " + *effect;
 }
 
 //----------------------------------------------------------
@@ -342,12 +350,22 @@ ostream &operator<<(ostream &os, const FileCommandProcessorAdapter &adapter)
 }
 
 /**
- * Add command to command history
+ * Add command to command history — also notifies observers (triggers log write via LogObserver)
  */
 void CommandProcessor::saveCommand(Command* cmd) {
     if (cmd) {
         commands->push_back(cmd);
+        notify();
     }
+}
+
+/**
+ * ILoggable: returns info about the most recently saved command for the game log
+ */
+string CommandProcessor::stringToLog() const {
+    if (commands->empty()) return "CommandProcessor: no commands saved";
+    Command* last = commands->back();
+    return "Command saved to CommandProcessor: " + commandNameToString(last->getCommandName());
 }
 
 /**

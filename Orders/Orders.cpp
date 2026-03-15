@@ -27,7 +27,7 @@ Order::Order() {
     effect = new string("");
 }
 
-Order::Order(const Order& other) {
+Order::Order(const Order& other) : Subject(other) {
     effect = new string(*other.effect);
 }
 
@@ -38,9 +38,14 @@ Order::~Order() {
 
 Order& Order::operator=(const Order& other) {
     if (this != &other) {
+        Subject::operator=(other);
         *effect = *other.effect;
     }
     return *this;
+}
+
+string Order::stringToLog() const {
+    return "Order executed, effect: " + *effect;
 }
 
 ostream& operator<<(ostream& os, const Order& order) {
@@ -92,15 +97,15 @@ void Deploy::execute() {
                   (target ? target->getName() : "null") +
                   "' does not belong to " +
                   (issuer ? issuer->getName() : "null") + ".";
-        cout << *effect << endl;
-        return;
+    } else {
+        int newCount = target->getArmyCount() + *armies;
+        target->setArmyCount(newCount);
+        *effect = issuer->getName() + " deployed " + to_string(*armies) +
+                  " armies to " + target->getName() +
+                  " (now " + to_string(newCount) + " armies).";
     }
-    int newCount = target->getArmyCount() + *armies;
-    target->setArmyCount(newCount);
-    *effect = issuer->getName() + " deployed " + to_string(*armies) +
-              " armies to " + target->getName() +
-              " (now " + to_string(newCount) + " armies).";
     cout << *effect << endl;
+    notify();
 }
 
 Deploy* Deploy::clone() const {
@@ -171,70 +176,65 @@ void Advance::execute() {
             reason = "a negotiate truce prevents attacks between " +
                      issuer->getName() + " and " + target->getOwner()->getName() + ".";
         *effect = "INVALID Advance: " + reason;
-        cout << *effect << endl;
-        return;
-    }
-
-    // Friendly move: both territories belong to issuer
-    if (target->getOwner() == issuer) {
+    } else if (target->getOwner() == issuer) {
+        // Friendly move: both territories belong to issuer
         int moved = min(*armies, source->getArmyCount());
         source->setArmyCount(source->getArmyCount() - moved);
         target->setArmyCount(target->getArmyCount() + moved);
         *effect = issuer->getName() + " moved " + to_string(moved) +
                   " armies from " + source->getName() + " to " + target->getName() + ".";
-        cout << *effect << endl;
-        return;
-    }
-
-    // Random devide to simulate a battle
-    mt19937 rng(random_device{}());
-
-    int attackers = min(*armies, source->getArmyCount());
-    int defenders = target->getArmyCount();
-
-    // Deduct attackers from source immediately
-    source->setArmyCount(source->getArmyCount() - attackers);
-
-    // Each attacker has 60% chance to kill one defender
-    // Each defender has 70% chance to kill one attacker
-    int attackerKills = 0;
-    int defenderKills = 0;
-    for (int i = 0; i < attackers; i++)
-        if (rng() % 100 < 60) attackerKills++;
-    for (int i = 0; i < defenders; i++)
-        if (rng() % 100 < 70) defenderKills++;
-
-    int survivingAttackers = max(0, attackers - defenderKills);
-    int survivingDefenders = max(0, defenders - attackerKills);
-
-    ostringstream oss;
-    oss << issuer->getName() << " attacks " << target->getName()
-        << " from " << source->getName()
-        << " (" << attackers << " vs " << defenders << "). ";
-
-    if (survivingDefenders == 0) {
-        // Attacker captures the territory
-        Player* prev = target->getOwner();
-        if (prev != nullptr) {
-            auto& prevList = *prev->getTerritoriesOwned();
-            prevList.erase(remove(prevList.begin(), prevList.end(), target), prevList.end());
-        }
-        target->setOwner(issuer);
-        target->setArmyCount(survivingAttackers);
-        issuer->getTerritoriesOwned()->push_back(target);
-        issuer->setConqueredThisTurn(true);
-        oss << issuer->getName() << " CAPTURES " << target->getName()
-            << " with " << survivingAttackers << " surviving armies!";
     } else {
-        // Defenders hold; surviving attackers return to source
-        source->setArmyCount(source->getArmyCount() + survivingAttackers);
-        target->setArmyCount(survivingDefenders);
-        oss << "Attack repelled. " << target->getName() << " holds with "
-            << survivingDefenders << " armies. "
-            << survivingAttackers << " attacker(s) returned to " << source->getName() << ".";
+        // Random device to simulate a battle
+        mt19937 rng(random_device{}());
+
+        int attackers = min(*armies, source->getArmyCount());
+        int defenders = target->getArmyCount();
+
+        // Deduct attackers from source immediately
+        source->setArmyCount(source->getArmyCount() - attackers);
+
+        // Each attacker has 60% chance to kill one defender
+        // Each defender has 70% chance to kill one attacker
+        int attackerKills = 0;
+        int defenderKills = 0;
+        for (int i = 0; i < attackers; i++)
+            if (rng() % 100 < 60) attackerKills++;
+        for (int i = 0; i < defenders; i++)
+            if (rng() % 100 < 70) defenderKills++;
+
+        int survivingAttackers = max(0, attackers - defenderKills);
+        int survivingDefenders = max(0, defenders - attackerKills);
+
+        ostringstream oss;
+        oss << issuer->getName() << " attacks " << target->getName()
+            << " from " << source->getName()
+            << " (" << attackers << " vs " << defenders << "). ";
+
+        if (survivingDefenders == 0) {
+            // Attacker captures the territory
+            Player* prev = target->getOwner();
+            if (prev != nullptr) {
+                auto& prevList = *prev->getTerritoriesOwned();
+                prevList.erase(remove(prevList.begin(), prevList.end(), target), prevList.end());
+            }
+            target->setOwner(issuer);
+            target->setArmyCount(survivingAttackers);
+            issuer->getTerritoriesOwned()->push_back(target);
+            issuer->setConqueredThisTurn(true);
+            oss << issuer->getName() << " CAPTURES " << target->getName()
+                << " with " << survivingAttackers << " surviving armies!";
+        } else {
+            // Defenders hold; surviving attackers return to source
+            source->setArmyCount(source->getArmyCount() + survivingAttackers);
+            target->setArmyCount(survivingDefenders);
+            oss << "Attack repelled. " << target->getName() << " holds with "
+                << survivingDefenders << " armies. "
+                << survivingAttackers << " attacker(s) returned to " << source->getName() << ".";
+        }
+        *effect = oss.str();
     }
-    *effect = oss.str();
     cout << *effect << endl;
+    notify();
 }
 
 Advance* Advance::clone() const {
@@ -306,14 +306,14 @@ void Bomb::execute() {
         else
             reason = target->getName() + " is not adjacent to any territory owned by " + issuer->getName() + ".";
         *effect = "INVALID Bomb: " + reason;
-        cout << *effect << endl;
-        return;
+    } else {
+        int halved = target->getArmyCount() / 2;
+        target->setArmyCount(halved);
+        *effect = issuer->getName() + " bombed " + target->getName() +
+                  " — armies reduced to " + to_string(halved) + ".";
     }
-    int halved = target->getArmyCount() / 2;
-    target->setArmyCount(halved);
-    *effect = issuer->getName() + " bombed " + target->getName() +
-              " — armies reduced to " + to_string(halved) + ".";
     cout << *effect << endl;
+    notify();
 }
 
 Bomb* Bomb::clone() const {
@@ -364,25 +364,25 @@ void Blockade::execute() {
         else
             reason = target->getName() + " does not belong to " + issuer->getName() + ".";
         *effect = "INVALID Blockade: " + reason;
-        cout << *effect << endl;
-        return;
+    } else {
+        int doubled = target->getArmyCount() * 2;
+        target->setArmyCount(doubled);
+
+        // Transfer the territory to the neutral player
+        Player* neutral = getNeutralPlayer();
+        // Remove from issuer's territory list
+        auto& issuerList = *issuer->getTerritoriesOwned();
+        issuerList.erase(remove(issuerList.begin(), issuerList.end(), target), issuerList.end());
+        // Add to neutral player's list
+        neutral->getTerritoriesOwned()->push_back(target);
+        target->setOwner(neutral);
+
+        *effect = issuer->getName() + " blockaded " + target->getName() +
+                  " — armies doubled to " + to_string(doubled) +
+                  " and ownership transferred to Neutral.";
     }
-    int doubled = target->getArmyCount() * 2;
-    target->setArmyCount(doubled);
-
-    // Transfer the territory to the neutral player
-    Player* neutral = getNeutralPlayer();
-    // Remove from issuer's territory list
-    auto& issuerList = *issuer->getTerritoriesOwned();
-    issuerList.erase(remove(issuerList.begin(), issuerList.end(), target), issuerList.end());
-    // Add to neutral player's list
-    neutral->getTerritoriesOwned()->push_back(target);
-    target->setOwner(neutral);
-
-    *effect = issuer->getName() + " blockaded " + target->getName() +
-              " — armies doubled to " + to_string(doubled) +
-              " and ownership transferred to Neutral.";
     cout << *effect << endl;
+    notify();
 }
 
 Blockade* Blockade::clone() const {
@@ -443,16 +443,16 @@ void Airlift::execute() {
         else
             reason = target->getName() + " does not belong to " + issuer->getName() + ".";
         *effect = "INVALID Airlift: " + reason;
-        cout << *effect << endl;
-        return;
+    } else {
+        int moved = min(*armies, source->getArmyCount());
+        source->setArmyCount(source->getArmyCount() - moved);
+        target->setArmyCount(target->getArmyCount() + moved);
+        *effect = issuer->getName() + " airlifted " + to_string(moved) +
+                  " armies from " + source->getName() + " to " + target->getName() +
+                  " (non-adjacent).";
     }
-    int moved = min(*armies, source->getArmyCount());
-    source->setArmyCount(source->getArmyCount() - moved);
-    target->setArmyCount(target->getArmyCount() + moved);
-    *effect = issuer->getName() + " airlifted " + to_string(moved) +
-              " armies from " + source->getName() + " to " + target->getName() +
-              " (non-adjacent).";
     cout << *effect << endl;
+    notify();
 }
 
 Airlift* Airlift::clone() const {
@@ -505,14 +505,14 @@ void Negotiate::execute() {
         else
             reason = "cannot negotiate with yourself.";
         *effect = "INVALID Negotiate: " + reason;
-        cout << *effect << endl;
-        return;
+    } else {
+        issuer->addNegotiation(targetPlayer);
+        targetPlayer->addNegotiation(issuer);
+        *effect = issuer->getName() + " and " + targetPlayer->getName() +
+                  " have negotiated a truce — neither can attack the other this turn.";
     }
-    issuer->addNegotiation(targetPlayer);
-    targetPlayer->addNegotiation(issuer);
-    *effect = issuer->getName() + " and " + targetPlayer->getName() +
-              " have negotiated a truce — neither can attack the other this turn.";
     cout << *effect << endl;
+    notify();
 }
 
 Negotiate* Negotiate::clone() const {
@@ -561,6 +561,14 @@ OrdersList& OrdersList::operator=(const OrdersList& other) {
 
 void OrdersList::addOrder(Order* order) {
     orders->push_back(order);
+    notify();
+}
+
+string OrdersList::stringToLog() const {
+    if (orders->empty()) return "Order added to list: (unknown)";
+    ostringstream oss;
+    oss << *orders->back();  // calls operator<< of order
+    return "Order added to list: " + oss.str();
 }
 
 void OrdersList::remove(int index) {

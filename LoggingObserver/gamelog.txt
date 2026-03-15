@@ -1,0 +1,19 @@
+=== Game Log ===
+Command effect saved: Map 'canada.map' loaded successfully.
+Command saved to CommandProcessor: loadmap
+Command saved to CommandProcessor: validatemap
+Command saved to CommandProcessor: addplayer
+Order added to list: Deploy Order [issuer: Alice, target: Ontario, armies: 5]
+Order added to list: Advance Order [issuer: Alice, from: Ontario -> to: Quebec, armies: 3]
+Order added to list: Negotiate Order [issuer: Alice, target player: Bob]
+Order executed, effect: Player1 deployed 4 armies to Alberta (now 14 armies).
+Order executed, effect: Player1 attacks BC from Alberta (5 vs 2). Player1 CAPTURES BC with 4 surviving armies!
+Order executed, effect: Player1 and Player2 have negotiated a truce — neither can attack the other this turn.
+GameEngine state changed to: MapLoaded
+GameEngine state changed to: MapValidated
+GameEngine state changed to: PlayersAdded
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: Win
+GameEngine state changed to: End
