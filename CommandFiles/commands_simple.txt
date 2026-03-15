@@ -1,0 +1,10 @@
+loadmap canada.map
+validatemap
+addplayer Alice
+addplayer Bob
+gamestart
+issueorder
+endissueorders
+execorder
+win
+quit
