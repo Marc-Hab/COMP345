@@ -10,17 +10,13 @@
 
 using namespace std;
 
-// ---------------------------------------------------------------------------
-// Helper: clear gamelog.txt before the demo so results are fresh each run
-// ---------------------------------------------------------------------------
+// Helper: clear gamelog.txt so each run starts fresh
 static void clearLog() {
     ofstream f("gamelog.txt", ios::trunc);
     f << "=== Game Log ===" << endl;
 }
 
-// ---------------------------------------------------------------------------
-// Helper: print gamelog.txt contents to stdout after each section
-// ---------------------------------------------------------------------------
+// Helper: dump gamelog.txt to stdout after each section
 static void printLog() {
     cout << "\n--- gamelog.txt ---" << endl;
     ifstream f("gamelog.txt");
@@ -33,11 +29,7 @@ int main() {
     clearLog();
     LogObserver* log = new LogObserver();
 
-    // =========================================================
-    // Requirement (1): Confirm inheritance at compile time
-    //   These static_assert checks verify all classes satisfy
-    //   the Subject and ILoggable contracts.
-    // =========================================================
+    cout << "\n===== DEMO 1: INHERITANCE CHECK =====" << endl;
     static_assert(is_base_of<Subject,    Command>::value,          "Command must extend Subject");
     static_assert(is_base_of<ILoggable,  Command>::value,          "Command must extend ILoggable");
     static_assert(is_base_of<Subject,    CommandProcessor>::value,  "CommandProcessor must extend Subject");
@@ -50,24 +42,15 @@ int main() {
     static_assert(is_base_of<ILoggable,  GameEngine>::value,        "GameEngine must extend ILoggable");
     cout << "[OK] All classes confirmed as subclasses of Subject and ILoggable." << endl;
 
-    // =========================================================
-    // Requirement (3): Command::saveEffect() → notify → log
-    // =========================================================
-    cout << "\n=== (3) Command::saveEffect() ===" << endl;
+    cout << "\n===== DEMO 2: Command::saveEffect() =====" << endl;
     {
         Command cmd(CommandName::LoadMap, {"canada.map"});
         cmd.attach(log);
         cmd.saveEffect("Map 'canada.map' loaded successfully.");
-        // Expected log entry: "Command effect saved: Map 'canada.map' loaded successfully."
     }
     printLog();
 
-    // =========================================================
-    // Requirement (3): CommandProcessor::saveCommand() → notify → log
-    //   getCommand() internally calls saveCommand() when a new command
-    //   is read, which triggers the notification.
-    // =========================================================
-    cout << "=== (3) CommandProcessor::saveCommand() via FileCommandProcessorAdapter ===" << endl;
+    cout << "\n===== DEMO 3: CommandProcessor::saveCommand() =====" << endl;
     {
         // Write a small commands file to read from
         {
@@ -80,22 +63,14 @@ int main() {
         FileCommandProcessorAdapter fcp("driver_commands.txt");
         fcp.attach(log);
 
-        // Each getCommand() reads one line → calls saveCommand() → notifies
         fcp.getCommand();   // loadmap
         fcp.getCommand();   // validatemap
         fcp.getCommand();   // addplayer
-        // Expected log entries (3 lines): "Command saved to CommandProcessor: loadmap/validatemap/addplayer"
     }
     printLog();
 
-    // =========================================================
-    // Requirement (4): OrdersList::addOrder() → notify → log
-    //   When an order is added to a player's list, its description
-    //   is written to gamelog.txt.
-    // =========================================================
-    cout << "=== (4) OrdersList::addOrder() ===" << endl;
+    cout << "\n===== DEMO 4: OrdersList::addOrder() =====" << endl;
     {
-        // Build minimal map / player setup so Order::validate() can work
         Territory t1("Ontario");   t1.setArmyCount(10);
         Territory t2("Quebec");    t2.setArmyCount(5);
         Territory t3("Manitoba");  t3.setArmyCount(3);
@@ -115,22 +90,17 @@ int main() {
         OrdersList& olist = *alice.getOrders();
         olist.attach(log);
 
-        Order* deploy   = new Deploy(&alice, &t1, 5);
-        Order* advance  = new Advance(&alice, &t1, &t2, 3);
+        Order* deploy    = new Deploy(&alice, &t1, 5);
+        Order* advance   = new Advance(&alice, &t1, &t2, 3);
         Order* negotiate = new Negotiate(&alice, &bob);
 
-        olist.addOrder(deploy);    // log: "Order added to list: Deploy Order [...]"
-        olist.addOrder(advance);   // log: "Order added to list: Advance Order [...]"
-        olist.addOrder(negotiate); // log: "Order added to list: Negotiate Order [...]"
-        // Expected: 3 log entries describing each order
+        olist.addOrder(deploy);    // log: "Order added to list: Deploy [...]"
+        olist.addOrder(advance);   // log: "Order added to list: Advance [...]"
+        olist.addOrder(negotiate); // log: "Order added to list: Negotiate [...]"
     }
     printLog();
 
-    // =========================================================
-    // Requirement (5): Order::execute() → notify → log
-    //   After execution each order logs its effect.
-    // =========================================================
-    cout << "=== (5) Order::execute() ===" << endl;
+    cout << "\n===== DEMO 5: NEGOTIATE ORDER prevents attacks =====" << endl;
     {
         Territory src("Alberta");  src.setArmyCount(10);
         Territory dst("BC");       dst.setArmyCount(2);
@@ -156,7 +126,6 @@ int main() {
         dep->execute();   // log: "Order executed, effect: ..."
         adv->execute();   // log: "Order executed, effect: ..."
         neg->execute();   // log: "Order executed, effect: ..."
-        // Expected: 3 log entries with the effect of each order
 
         delete dep;
         delete adv;
@@ -164,11 +133,7 @@ int main() {
     }
     printLog();
 
-    // =========================================================
-    // Requirement (6): GameEngine::transition() → notify → log
-    //   Every meaningful state change is logged.
-    // =========================================================
-    cout << "=== (6) GameEngine::transition() ===" << endl;
+    cout << "\n===== DEMO 6: GameEngine::transition() =====" << endl;
     {
         GameEngine ge;
         ge.attach(log);
@@ -181,7 +146,6 @@ int main() {
         ge.transition(GameState::ExecuteOrders);       // log: "GameEngine state changed to: ExecuteOrders"
         ge.transition(GameState::Win);                 // log: "GameEngine state changed to: Win"
         ge.transition(GameState::End);                 // log: "GameEngine state changed to: End"
-        // Expected: 8 log entries with each state name
     }
     printLog();
 

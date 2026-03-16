@@ -2,15 +2,11 @@
 #include <algorithm>
 #include <iostream>
 
-// ---------------------------------------------------------------------------
-// Subject
-// ---------------------------------------------------------------------------
-
+// --- Subject ---
 Subject::Subject() {
     observers = new std::vector<Observer*>();
 }
 
-// Copy constructor
 Subject::Subject(const Subject& other) {
     observers = new std::vector<Observer*>();
 }
@@ -19,7 +15,6 @@ Subject::~Subject() {
     delete observers;
 }
 
-// Assignment
 Subject& Subject::operator=(const Subject& other) {
     return *this;
 }
@@ -35,17 +30,13 @@ void Subject::detach(Observer* observer) {
     }
 }
 
-// Notifies all attached observers
 void Subject::notify() {
     for (Observer* obs : *observers) {
         obs->update(dynamic_cast<ILoggable*>(this));
     }
 }
 
-// ---------------------------------------------------------------------------
-// LogObserver
-// ---------------------------------------------------------------------------
-
+// --- LogObserver ---
 LogObserver::LogObserver() {
     logFile = new std::ofstream("gamelog.txt", std::ios::app);
     if (!logFile->is_open()) {
@@ -60,7 +51,6 @@ LogObserver::~LogObserver() {
     delete logFile;
 }
 
-// Called by Subject::notify()
 void LogObserver::update(ILoggable* subject) {
     if (subject && logFile && logFile->is_open()) {
         *logFile << subject->stringToLog() << std::endl;

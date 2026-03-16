@@ -3,24 +3,22 @@
 #include <vector>
 #include <fstream>
 
-// Forward declaration
+// forward declaration
 class ILoggable;
 
-// Abstract Observer base class
 class Observer {
 public:
     virtual ~Observer() {}
     virtual void update(ILoggable* subject) = 0;
 };
 
-// ILoggable interface: all loggable subjects must implement stringToLog()
+// interface for any class that can be logged
 class ILoggable {
 public:
     virtual ~ILoggable() {}
     virtual std::string stringToLog() const = 0;
 };
 
-// Subject base class: manages a list of observers and notifies them
 class Subject {
 public:
     Subject();
@@ -36,7 +34,7 @@ private:
     std::vector<Observer*>* observers;
 };
 
-// Concrete observer: writes log entries to gamelog.txt
+// Writes log entries to gamelog.txt
 class LogObserver : public Observer {
 public:
     LogObserver();
