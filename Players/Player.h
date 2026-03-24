@@ -10,6 +10,7 @@ class Territory;
 class Hand;
 class OrdersList;
 class Deck;
+class PlayerStrategy;
 
 class Player {
 private:
@@ -18,11 +19,12 @@ private:
     Hand* hand;
     OrdersList* ordersList;
     int* reinforcementPool;
+    PlayerStrategy* strategy;
 
     // Data for each turn
-    int* ordersIssuedThisTurn;        // number of non-deploy orders issued this turn
-    std::vector<Player*>* negotiatedWith; // players who have been negotiated with
-    bool* conqueredThisTurn;          // true if a player conquered a territory this turn
+    int* ordersIssuedThisTurn;              // number of non-deploy orders issued this turn
+    std::vector<Player*>* negotiatedWith;   // players who have been negotiated with
+    bool* conqueredThisTurn;                // true if a player conquered a territory this turn
 
 public:
     // Constructors, destructor, operator overloads
@@ -38,6 +40,7 @@ public:
     // allPlayers is needed to create Negotiate orders from Diplomacy cards.
     bool issueOrder(Deck* deck, const std::vector<Player*>* allPlayers = nullptr);
     void resetOrderIssuingState(); // resets the data before the start of each turn
+    void incrementOrdersIssuedThisTurn(){(*ordersIssuedThisTurn)++;};
 
     // Getters
     std::string getName() const;
@@ -46,6 +49,7 @@ public:
     Hand* getHand() const;
     int getReinforcementPool() const;
     bool getConqueredThisTurn() const;
+    int getOrdersIssuedThisTurn() const;
 
     // Setters
     void setReinforcementPool(int count);
