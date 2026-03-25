@@ -277,13 +277,7 @@ bool Bomb::validate() const {
     if (target->getOwner() == issuer) {
         return false;
     }
-
-    // Check if a truce has been negotiated
-    if (issuer->hasNegotiatedWith(target->getOwner())) {
-        return false;
-    }
     
-
     // Target must be adjacent to at least one territory owned by issuer
     for (Territory* t : *issuer->getTerritoriesOwned()) {
         if (t->isAdjacentTo(target)) {
@@ -300,9 +294,6 @@ void Bomb::execute() {
             reason = "null parameters.";
         else if (target->getOwner() == issuer)
             reason = "cannot bomb own territory " + target->getName() + ".";
-        else if (issuer->hasNegotiatedWith(target->getOwner()))
-            reason = "a negotiate truce prevents attacks between " +
-                     issuer->getName() + " and " + target->getOwner()->getName() + ".";
         else
             reason = target->getName() + " is not adjacent to any territory owned by " + issuer->getName() + ".";
         *effect = "INVALID Bomb: " + reason;
