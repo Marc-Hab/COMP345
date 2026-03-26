@@ -176,7 +176,7 @@ bool HumanPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vect
         exit(0);
     }
     if (choice == 1) {
-        cout << playerName << " is done issuing orders.\n";
+        cout << "\n" << playerName << " is done issuing orders.\n";
         return false;
     }
 
