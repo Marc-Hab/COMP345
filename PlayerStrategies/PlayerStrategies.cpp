@@ -5,8 +5,34 @@
 #include "../Cards/Cards.h"
 
 #include <algorithm>
+#include <iostream>
+#include <map>
+#include <cstdlib>
 
 using namespace std;
+
+//---- Helpers -----------------------
+
+/*
+* Reads an integer from cin.
+* Re-prompts if invalid input.
+*/
+static int readChoice(int min, int max) {
+    int choice;
+    while (true) {
+        cin >> choice;
+        if (cin.fail() || choice < min || choice > max) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Invalid input. Enter a number between " << min << " and " << max << ": ";
+        } else {
+            cin.ignore(1000, '\n');
+            return choice;
+        }
+    }
+}
+
+//------------------------------------------
 
 
 //---- PlayerStrategy -----------------------
@@ -15,7 +41,7 @@ using namespace std;
 * Stream insertion operator for strategies.
 * Delegates to the polymorphic print method.  
 */
-std::ostream& operator<<(std::ostream& os, const PlayerStrategy& ps){
+ostream& operator<<(ostream& os, const PlayerStrategy& ps){
     return ps.print(os);
 }
 
@@ -29,7 +55,7 @@ std::ostream& operator<<(std::ostream& os, const PlayerStrategy& ps){
 * Attack Strategy: 
 * Return all adjacent enemy territories sorted by army count in ASC order
 */
-std::vector<Territory*> HumanPlayerStrategy::toAttack(const Player* player){
+vector<Territory*> HumanPlayerStrategy::toAttack(const Player* player){
     vector<Territory*> attackTargets;
     
     for (Territory* t : *(player->getTerritoriesOwned())) {
@@ -60,7 +86,7 @@ std::vector<Territory*> HumanPlayerStrategy::toAttack(const Player* player){
 * Defend Strategy: 
 * Return all owned territories sorted by army count in ASC order
 */
-std::vector<Territory*> HumanPlayerStrategy::toDefend(const Player* player){
+vector<Territory*> HumanPlayerStrategy::toDefend(const Player* player){
     vector<Territory*> defend = *(player->getTerritoriesOwned());
     
     sort(defend.begin(), defend.end(), [](Territory* a, Territory* b) {
@@ -70,15 +96,366 @@ std::vector<Territory*> HumanPlayerStrategy::toDefend(const Player* player){
     return defend;
 };
 
-// ---------------------------------------------------------------------------
-// Issues orders in this manner:
-//   1. Deploy all armies in reinforcement pool.
-//   2. Advance to defend (move armies between adjacent owned territories).
-//   3. Advance to attack an enemy territory.
-//   4. Play one card from hand.
-// Returns true if an order was issued, false when the player's turn is done.
-// ---------------------------------------------------------------------------
-bool HumanPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers){
+
+/*
+* Order Issuing Strategy: 
+* 1: Deploy all reinforcements before doing anything else.
+* 2: Choose to play a card or advance until done.
+*/
+bool HumanPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
+    
+    string playerName = player->getName();
+
+    vector<Territory*> tOwned = toDefend(player); // sorted weakest first
+
+    // ── Phase 1: Deploy Reinforcements Until None Left ───────────────────────────────────────
+    
+    if (player->getReinforcementPool() > 0) {
+
+        // Store the number of reinforcements to be deployed in each territory 
+        // (not actually deployed until execution phase)
+        map<Territory*, int> pendingArmies;
+
+        while (player->getReinforcementPool() > 0) {
+            
+            cout << "\n[" << playerName << "] Reinforcements remaining: " << player->getReinforcementPool() << "\n";
+            
+            // List player's territories
+            cout << "Your territories:\n";
+            
+            for (int i = 0; i < (int)tOwned.size(); i++) {
+                
+                cout << "  " << (i + 1) << ". " << tOwned[i]->getName() << " (" << tOwned[i]->getArmyCount() << " armies, " 
+                     << pendingArmies[tOwned[i]] << " to be deployed" << ")\n";
+            }
+            
+            // Quit game option
+            cout << "  0. Quit game\n";
+            
+            cout << "Choose territory to deploy to (1-" << tOwned.size() << "): ";
+            int tChoice = readChoice(0, (int)tOwned.size());
+            
+            if (tChoice == 0) {
+                cout << "\nQuitting game...\n";
+                exit(0);
+            }
+
+
+            Territory* target = tOwned[tChoice - 1];
+
+            cout << "How many armies to deploy? (1-" << player->getReinforcementPool() << "): ";
+            int armies = readChoice(1, player->getReinforcementPool());
+
+            cout << "\n" << playerName << " orders " << armies << " armies to deploy to " << target->getName() << ".\n";
+            
+            player->getOrders()->addOrder(new Deploy(player, target, armies));
+            player->setReinforcementPool(player->getReinforcementPool() - armies);
+            pendingArmies[target] += armies;
+        }
+
+        cout << "[" << playerName << "] All reinforcements deployed.\n";
+        return true;
+    }
+
+    // ── Phase 2: Play Card or Advance Until Done ─────────────────────────────────────────────────
+    
+    vector<Card*>* cards = player->getHand()->getCards();
+    
+    
+    cout << "\n[" << playerName << "] Choose an action:\n"
+         << "  1. Done issuing orders\n"
+         << "  2. Advance armies\n"
+         << "  3. Play a card (" << cards->size() << " in hand)\n"
+         << "  0. Quit game\n"
+         << "Choice: ";
+
+    int choice = readChoice(0, 3);
+
+    if (choice == 0) {
+        cout << "\nQuitting game...\n";
+        exit(0);
+    }
+    if (choice == 1) {
+        cout << playerName << " is done issuing orders.\n";
+        return false;
+    }
+
+
+    // ── Advance ──────────────────────────────────────────────────────────────
+    if (choice == 2) {
+
+        // Territories the player can advance from (army count > 0)
+        vector<Territory*> advanceFrom;
+        copy_if(tOwned.begin(), tOwned.end(), back_inserter(advanceFrom), [](Territory* t){return t->getArmyCount() > 0;});
+
+        if (advanceFrom.empty()){
+            cout << "\n" << "No armies available to advance.\n";
+            return true;
+        }
+
+        cout << "\nChoose source territory:\n";
+        
+        for (int i = 0; i < (int)advanceFrom.size(); i++) {
+
+            cout << "  " << (i + 1) << ". " << advanceFrom[i]->getName() << " (" << advanceFrom[i]->getArmyCount() << " armies)\n";
+        }
+        
+        cout << "Source (1-" << advanceFrom.size() << "): ";
+        int tChoice = readChoice(1, (int)advanceFrom.size());
+        
+
+        Territory* source = advanceFrom[tChoice - 1];
+
+        vector<Territory*> adjacent = *source->getAdjacentTerritories();
+
+
+        cout << "\nChoose target territory:\n";
+        for (int i = 0; i < (int)adjacent.size(); i++) {
+            
+            string ownerName = adjacent[i]->getOwner() ? adjacent[i]->getOwner()->getName() : "neutral";
+            
+            cout << "  " << (i + 1) << ". " << adjacent[i]->getName()
+                 << " (" << adjacent[i]->getArmyCount() << " armies, owner: " << ownerName << ")\n";
+        }
+        
+        cout << "Target (1-" << adjacent.size() << "): ";
+        Territory* target = adjacent[readChoice(1, (int)adjacent.size()) - 1];
+
+
+        cout << "How many armies to advance? (1-" << source->getArmyCount() << "): ";
+        int armies = readChoice(1, source->getArmyCount());
+
+        cout << "\n" << playerName << " advances " << armies << " armies: "
+             << source->getName() << " -> " << target->getName() << ".\n";
+        player->getOrders()->addOrder(new Advance(player, source, target, armies));
+        return true;
+    }
+
+
+    // ── Play card ────────────────────────────────────────────────────────────
+    if (choice == 3) {
+        if (cards->empty()) {
+            cout << "No cards in hand.\n";
+            return true;
+        }
+        cout << "\nYour cards:\n";
+        for (int i = 0; i < (int)cards->size(); i++) {
+            cout << "  " << (i + 1) << ". " << *(*cards)[i] << "\n";
+        }
+        cout << "Choose card to play (1-" << cards->size() << "): ";
+        Card* card = (*cards)[readChoice(1, (int)cards->size()) - 1];
+        cout << "\n" << playerName << " plays " << *card << ".\n";
+        card->play(deck, player->getHand(), allPlayers);
+        return true;
+    }
+
+    return false;
+}
+
+/*
+* Clones the strategy
+*/
+PlayerStrategy* HumanPlayerStrategy::clone() const {
+    return new HumanPlayerStrategy(*this);
+}
+
+/*
+* Stream insertion operator
+*/
+std::ostream& HumanPlayerStrategy::print(std::ostream& os) const {
+    return os << "HumanPlayerStrategy";
+};
+
+
+//-------------------------------------------------------------------
+
+
+//---- BenevolentPlayerStrategy -----------------------
+
+vector<Territory*> BenevolentPlayerStrategy::toAttack(const Player*){
+    //TODO: implement this
+    return {};
+}
+
+vector<Territory*> BenevolentPlayerStrategy::toDefend(const Player*){
+    //TODO: implement this
+    return {};
+}
+
+bool BenevolentPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
+    //TODO: implement this
+    return false;
+}
+
+/*
+* Clones the strategy
+*/
+PlayerStrategy* BenevolentPlayerStrategy::clone() const {
+    return new BenevolentPlayerStrategy(*this);
+}
+
+/*
+* Stream insertion operator
+*/
+std::ostream& BenevolentPlayerStrategy::print(std::ostream& os) const {
+    return os << "BenevolentPlayerStrategy";
+};
+
+
+//-------------------------------------------------------------------
+
+
+//---- AgressivePlayerStrategy -----------------------
+
+vector<Territory*> AggressivePlayerStrategy::toAttack(const Player*){
+    //TODO: implement this
+    return {};
+}
+
+vector<Territory*> AggressivePlayerStrategy::toDefend(const Player*){
+    //TODO: implement this
+    return {};
+}
+
+bool AggressivePlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
+    //TODO: implement this
+    return false;
+}
+
+/*
+* Clones the strategy
+*/
+PlayerStrategy* AggressivePlayerStrategy::clone() const {
+    return new AggressivePlayerStrategy(*this);
+}
+
+/*
+* Stream insertion operator
+*/
+std::ostream& AggressivePlayerStrategy::print(std::ostream& os) const {
+    return os << "AggressivePlayerStrategy";
+};
+
+
+//-------------------------------------------------------------------
+
+
+//---- NeutralPlayerStrategy -----------------------
+
+vector<Territory*> NeutralPlayerStrategy::toAttack(const Player*){
+    //TODO: implement this
+    return {};
+}
+
+vector<Territory*> NeutralPlayerStrategy::toDefend(const Player*){
+    //TODO: implement this
+    return {};
+}
+
+bool NeutralPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
+    //TODO: implement this
+    return false;
+}
+
+/*
+* Clones the strategy
+*/
+PlayerStrategy* NeutralPlayerStrategy::clone() const {
+    return new NeutralPlayerStrategy(*this);
+}
+
+/*
+* Stream insertion operator
+*/
+std::ostream& NeutralPlayerStrategy::print(std::ostream& os) const {
+    return os << "NeutralPlayerStrategy";
+};
+
+
+//-------------------------------------------------------------------
+
+
+//---- CheaterPlayerStrategy -----------------------
+
+vector<Territory*> CheaterPlayerStrategy::toAttack(const Player*){
+    //TODO: implement this
+    return {};
+}
+
+vector<Territory*> CheaterPlayerStrategy::toDefend(const Player*){
+    //TODO: implement this
+    return {};
+}
+
+bool CheaterPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
+    //TODO: implement this
+    return false;
+}
+
+/*
+* Clones the strategy
+*/
+PlayerStrategy* CheaterPlayerStrategy::clone() const {
+    return new CheaterPlayerStrategy(*this);
+}
+
+/*
+* Stream insertion operator
+*/
+std::ostream& CheaterPlayerStrategy::print(std::ostream& os) const {
+    return os << "CheaterPlayerStrategy";
+};
+
+
+//-------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+*   Helper functions, will be deleted later 
+*/
+
+static vector<Territory*> toAttack(const Player* player){
+    return {};
+}
+
+static vector<Territory*> toDefend(const Player* player){
+    return {};
+}
+
+static bool defaultIssueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers){
     // 1. Deploy all armies in reinforcement pool.
     if (player->getReinforcementPool() > 0) {
         
@@ -189,18 +566,9 @@ bool HumanPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vect
     // End of issuing orders for this turn
     cout << player->getName() << " is done issuing orders." << endl;
     return false;
-};
-
-/*
-* Clones the strategy
-*/
-PlayerStrategy* HumanPlayerStrategy::clone() const {
-    return new HumanPlayerStrategy(*this);
 }
 
+
 /*
-* Stream insertion operator
+*   END OF TO BE DELETED
 */
-std::ostream& HumanPlayerStrategy::print(std::ostream& os) const {
-    return os << "HumanPlayerStrategy";
-};

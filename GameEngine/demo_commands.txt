@@ -2,5 +2,4 @@ loadmap canada.map
 validatemap
 addplayer Alice
 addplayer Bob
-addplayer Charlie
 gamestart

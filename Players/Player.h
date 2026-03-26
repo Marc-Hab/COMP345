@@ -55,6 +55,7 @@ public:
     void setReinforcementPool(int count);
     void addReinforcements(int count);
     void setConqueredThisTurn(bool val);
+    void setStrategy(PlayerStrategy* strategy);
 
     // Negotiation helpers
     void addNegotiation(Player* other);

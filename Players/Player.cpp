@@ -153,6 +153,16 @@ void Player::setConqueredThisTurn(bool val) {
     *conqueredThisTurn = val;
 }
 
+/*
+* Sets a new strategy for the player
+*/
+void Player::setStrategy(PlayerStrategy* strategy) {
+    
+    delete this->strategy;
+    this->strategy = strategy;
+
+}
+
 void Player::addNegotiation(Player* other) {
     // Only add if not already present
     for (Player* p : *negotiatedWith) {
