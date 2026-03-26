@@ -31,6 +31,7 @@ enum class GameState {
 std::string stateToString(GameState s);
 
 enum class CommandName {
+    Tournament,
     LoadMap,
     ValidateMap,
     AddPlayer,
@@ -70,6 +71,7 @@ private:
 
     // Startup action handlers
     bool executeCommand(Command* cmd);
+    bool playTournament(Command* cmd);
     bool loadMap(Command* cmd);
     bool validateMap(Command* cmd);
     bool addPlayer(Command* cmd);

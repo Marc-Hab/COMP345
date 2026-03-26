@@ -370,9 +370,10 @@ Command* CommandProcessor::getCommand() {
     return cmd;
 }
 
-namespace {
 
-bool commandWellFormed(Command* cmd){
+//------ Helper methods -------------------------------------
+
+static bool commandWellFormed(Command* cmd){
     
     if (!cmd) {
         return false;
@@ -382,6 +383,10 @@ bool commandWellFormed(Command* cmd){
     vector<string> args = cmd->getArguments();
     
     switch (cmdName) {
+        case CommandName::Tournament:
+            // TODO: implement tournament command validation (refactor into a new method because complicated)
+            cout << "Tournament Command is well formed" << endl;
+            return true;
         case CommandName::LoadMap:
             if (args.size() != 1) {
                 cmd->saveEffect("ERROR: 'loadmap' requires exactly 1 argument (map filename). Usage: loadmap <filename>");
@@ -416,7 +421,7 @@ bool commandWellFormed(Command* cmd){
            
 }
 
-bool commandValidInState(Command* cmd, GameState currentState){
+static bool commandValidInState(Command* cmd, GameState currentState){
 
     if (!cmd) {
         return false;
@@ -425,7 +430,7 @@ bool commandValidInState(Command* cmd, GameState currentState){
     CommandName cmdName = cmd->getCommandName();
 
     if (currentState == GameState::Start) {
-        if (cmdName == CommandName::LoadMap) {
+        if (cmdName == CommandName::LoadMap || cmdName == CommandName::Tournament) {
             return true;
         }
     }
@@ -475,7 +480,7 @@ bool commandValidInState(Command* cmd, GameState currentState){
 
 }
 
-}
+//------ End of Helper methods -------------------------------------
 
 bool CommandProcessor::validate(Command* cmd, GameState currentState) {
 

@@ -91,10 +91,10 @@ void Card::play(Deck* deck, Hand* hand, const std::vector<Player*>* allPlayers) 
 
     switch (*type) {
         case CardType::BOMB: {
-            // Bomb the weakest adjacent enemy territory
+            // Bomb the strongest adjacent enemy territory
             auto attack = player->toAttack();
             if (!attack.empty()) {
-                newOrder = new Bomb(player, attack[0]);
+                newOrder = new Bomb(player, attack.back());
             }
             break;
         }
