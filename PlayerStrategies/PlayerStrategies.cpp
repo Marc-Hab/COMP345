@@ -225,7 +225,7 @@ bool HumanPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vect
         cout << "How many armies to advance? (1-" << source->getArmyCount() << "): ";
         int armies = readChoice(1, source->getArmyCount());
 
-        cout << "\n" << playerName << " advances " << armies << " armies: "
+        cout << "\n" << playerName << " orders " << armies << " armies to advance: "
              << source->getName() << " -> " << target->getName() << ".\n";
         player->getOrders()->addOrder(new Advance(player, source, target, armies));
         return true;

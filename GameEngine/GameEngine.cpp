@@ -28,20 +28,16 @@ void GameEngine::buildTransitions() {
 
     // --- Startup phase ---
     transitions[{GameState::Start, CommandName::LoadMap}] = GameState::MapLoaded;
+    transitions[{GameState::Start, CommandName::Tournament}] = GameState::Win;
 
     // Allow re-loading map while still setting up
     transitions[{GameState::MapLoaded, CommandName::LoadMap}] = GameState::MapLoaded;
     transitions[{GameState::MapLoaded, CommandName::ValidateMap}] = GameState::MapValidated;
 
-    // In many versions, you can loadmap again even after validate; adjust if your diagram differs
-    transitions[{GameState::MapValidated, CommandName::LoadMap}] = GameState::MapLoaded;
     transitions[{GameState::MapValidated, CommandName::AddPlayer}] = GameState::PlayersAdded;
 
     // Add multiple players
     transitions[{GameState::PlayersAdded, CommandName::AddPlayer}] = GameState::PlayersAdded;
-
-    // Often allowed to loadmap again before assigning countries; adjust if needed
-    transitions[{GameState::PlayersAdded, CommandName::LoadMap}] = GameState::MapLoaded;
 
     transitions[{GameState::PlayersAdded, CommandName::GameStart}] = GameState::AssignReinforcement;
 
@@ -95,6 +91,7 @@ void GameEngine::copyFrom(const GameEngine& other) {
 CommandName parseCommandName(const std::string& input) {
     std::string token = toLowerTrimToken(input);
     
+    if (token == "tournament") return CommandName::Tournament;
     if (token == "loadmap") return CommandName::LoadMap;
     if (token == "validatemap") return CommandName::ValidateMap;
     if (token == "addplayer") return CommandName::AddPlayer;
@@ -127,6 +124,7 @@ std::string stateToString(GameState s) {
 
 std::string commandNameToString(CommandName c) {
     switch (c) {
+        case CommandName::Tournament: return "tournament";
         case CommandName::LoadMap: return "loadmap";
         case CommandName::ValidateMap: return "validatemap";
         case CommandName::AddPlayer: return "addplayer";
@@ -533,12 +531,32 @@ void GameEngine::listAvailableMaps() const {
  */
 bool GameEngine::executeCommand(Command* cmd) {
     switch (cmd->getCommandName()) {
-        case CommandName::LoadMap:    return loadMap(cmd);
+        case CommandName::Tournament:  return playTournament(cmd);
+        case CommandName::LoadMap:     return loadMap(cmd);
         case CommandName::ValidateMap: return validateMap(cmd);
-        case CommandName::AddPlayer:  return addPlayer(cmd);
-        case CommandName::GameStart:  return gameStart(cmd);
+        case CommandName::AddPlayer:   return addPlayer(cmd);
+        case CommandName::GameStart:   return gameStart(cmd);
         default: return true; // no extra action for play-phase commands
     }
+}
+
+/**
+ * Plays a Tournament based on the arguments of the command.
+ */
+bool GameEngine::playTournament(Command* cmd){
+
+    //TODO: Implement tournament logic
+
+    cout << "Executing Tournament command: " << commandNameToString(cmd->getCommandName());
+    for (string s: cmd->getArguments()){
+        cout << " " << s;
+    }
+    cout << endl;
+
+    //TODO: Implement the table to be saved in the log file
+
+    cmd->saveEffect("\n Tournament results table");
+    return true;
 }
 
 /**
@@ -691,35 +709,40 @@ void GameEngine::startupPhase() {
     cout << "        WARZONE - STARTUP PHASE" << endl;
     cout << "========================================" << endl;
     cout << "Commands:" << endl;
-    cout << "  loadmap <filename>  - load a map" << endl;
-    cout << "  validatemap         - validate loaded map" << endl;
-    cout << "  addplayer <name>    - add a player (2-6 total)" << endl;
-    cout << "  gamestart           - distribute territories & begin" << endl;
-    cout << "  quit                - exit" << endl;
+    cout << "  loadmap <filename>      - load a map" << endl;
+    cout << "  validatemap             - validate loaded map" << endl;
+    cout << "  addplayer <name>        - add a player (2-6 total)" << endl;
+    cout << "  gamestart               - distribute territories & begin" << endl;
+    cout << "  tournament -M <maps> -P <strategies> -G <games> -D <maxturns>" << endl;
+    cout << "      M: 1-5 map files    P: 2-4 of: Aggressive Benevolent Neutral Cheater" << endl;
+    cout << "      G: 1-5 games        D: 10-50 max turns per game" << endl;
+    cout << "  quit                    - exit" << endl;
     cout << endl;
     listAvailableMaps();
 
-    while (*state != GameState::AssignReinforcement) {
+    while (! (*state == GameState::AssignReinforcement || *state == GameState::Win)) {
         cout << "\n(state: " << stateToString(*state) << ") ";
         if (!processNextCommand()) {
             return; // quit
         }
     }
 
-    // Print final summary
-    cout << "\n========================================" << endl;
-    cout << "       STARTUP PHASE COMPLETE" << endl;
-    cout << "========================================" << endl;
-    cout << "Players in game (" << players->size() << "):" << endl;
-    for (Player* p : *players) {
-        cout << "  " << p->getName()
-             << " | territories: " << p->getTerritoriesOwned()->size()
-             << " | reinforcement pool: " << p->getReinforcementPool()
-             << " | cards in hand: " << p->getHand()->getCards()->size()
-             << endl;
+    if (*state == GameState::AssignReinforcement){
+        // Print final summary
+        cout << "\n========================================" << endl;
+        cout << "       STARTUP PHASE COMPLETE" << endl;
+        cout << "========================================" << endl;
+        cout << "Players in game (" << players->size() << "):" << endl;
+        for (Player* p : *players) {
+            cout << "  " << p->getName()
+                << " | territories: " << p->getTerritoriesOwned()->size()
+                << " | reinforcement pool: " << p->getReinforcementPool()
+                << " | cards in hand: " << p->getHand()->getCards()->size()
+                << endl;
+        }
+        cout << "Game is ready - entering play phase." << endl;
+        cout << "========================================" << endl;
     }
-    cout << "Game is ready - entering play phase." << endl;
-    cout << "========================================" << endl;
 }
 
 /**
