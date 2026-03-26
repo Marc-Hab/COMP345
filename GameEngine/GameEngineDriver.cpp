@@ -1,5 +1,6 @@
 #include "GameEngine.h"
 #include "../CommandProcessor/CommandProcessing.h"
+#include "../LoggingObserver/LoggingObserver.h"
 #include "../Maps/Map.h"
 #include "../Players/Player.h"
 #include <iostream>
@@ -37,6 +38,9 @@ int main(int argc, char* argv[]) {
         cout << "Usage: " << argv[0] << " [-console | -file <filename>]" << endl;
         return 2;
     }
+
+    // One global observer for all Subject instances
+    Subject::attachGlobal(new LogObserver());
 
     GameEngine* engine = new GameEngine(processor);
 

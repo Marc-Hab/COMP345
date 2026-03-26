@@ -30,8 +30,13 @@ public:
     void detach(Observer* observer);
     void notify();
 
+    // Attach an observer that is notified by every Subject instance
+    static void attachGlobal(Observer* observer);
+    static void detachGlobal(Observer* observer);
+
 private:
     std::vector<Observer*>* observers;
+    static std::vector<Observer*>* globalObservers;
 };
 
 // Writes log entries to gamelog.txt

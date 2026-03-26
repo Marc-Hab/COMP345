@@ -3,12 +3,17 @@
 #include <iostream>
 
 // --- Subject ---
+
+// Initialize the static global observers list
+std::vector<Observer*>* Subject::globalObservers = new std::vector<Observer*>();
+
 Subject::Subject() {
     observers = new std::vector<Observer*>();
 }
 
 Subject::Subject(const Subject& other) {
     observers = new std::vector<Observer*>();
+    // global observers are not copied, because they are shared
 }
 
 Subject::~Subject() {
@@ -30,9 +35,24 @@ void Subject::detach(Observer* observer) {
     }
 }
 
+void Subject::attachGlobal(Observer* observer) {
+    globalObservers->push_back(observer);
+}
+
+void Subject::detachGlobal(Observer* observer) {
+    auto it = std::find(globalObservers->begin(), globalObservers->end(), observer);
+    if (it != globalObservers->end()) {
+        globalObservers->erase(it);
+    }
+}
+
 void Subject::notify() {
+    ILoggable* loggable = dynamic_cast<ILoggable*>(this);
     for (Observer* obs : *observers) {
-        obs->update(dynamic_cast<ILoggable*>(this));
+        obs->update(loggable);
+    }
+    for (Observer* obs : *globalObservers) {
+        obs->update(loggable);
     }
 }
 
