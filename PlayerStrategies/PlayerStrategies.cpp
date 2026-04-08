@@ -273,17 +273,76 @@ std::ostream& HumanPlayerStrategy::print(std::ostream& os) const {
 //---- BenevolentPlayerStrategy -----------------------
 
 vector<Territory*> BenevolentPlayerStrategy::toAttack(const Player*){
-    //TODO: implement this
     return {};
 }
 
-vector<Territory*> BenevolentPlayerStrategy::toDefend(const Player*){
-    //TODO: implement this
-    return {};
+vector<Territory*> BenevolentPlayerStrategy::toDefend(const Player* player){
+    vector<Territory*> defend = *(player->getTerritoriesOwned());
+
+    sort(defend.begin(), defend.end(), [](Territory* a, Territory* b) {
+        return a->getArmyCount() < b->getArmyCount();
+    });
+
+    return defend;
 }
 
 bool BenevolentPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
-    //TODO: implement this
+    vector<Territory*> defend = toDefend(player);
+
+    if (player->getReinforcementPool() > 0) {
+        if (!defend.empty()) {
+            Territory* target = defend[0];
+            int armies = player->getReinforcementPool();
+
+            cout << player->getName() << " issues Deploy order: " << armies
+                 << " armies to " << target->getName() << endl;
+
+            player->getOrders()->addOrder(new Deploy(player, target, armies));
+            player->setReinforcementPool(0);
+        }
+        return true;
+    }
+
+    if (player->getOrdersIssuedThisTurn() == 0) {
+        player->incrementOrdersIssuedThisTurn();
+
+        bool issued = false;
+        for (int i = (int)defend.size() - 1; i >= 1 && !issued; i--) {
+            for (int j = 0; j < i && !issued; j++) {
+                if (defend[i]->isAdjacentTo(defend[j]) && defend[i]->getArmyCount() > 1) {
+                    int moveArmies = defend[i]->getArmyCount() / 2;
+
+                    cout << player->getName() << " issues Advance order (defend): "
+                         << defend[i]->getName() << " -> " << defend[j]->getName()
+                         << " (" << moveArmies << " armies)" << endl;
+
+                    player->getOrders()->addOrder(new Advance(player, defend[i], defend[j], moveArmies));
+                    issued = true;
+                }
+            }
+        }
+
+        if (!issued) {
+            cout << player->getName() << " skips defend-advance (no adjacent territories to reinforce)." << endl;
+        }
+        return true;
+    }
+
+    if (player->getOrdersIssuedThisTurn() == 1) {
+        player->incrementOrdersIssuedThisTurn();
+
+        vector<Card*>* cards = player->getHand()->getCards();
+        if (!cards->empty() && deck != nullptr) {
+            Card* card = cards->front();
+            cout << player->getName() << " plays card: " << *card << endl;
+            card->play(deck, player->getHand(), allPlayers);
+        } else {
+            cout << player->getName() << " has no cards to play." << endl;
+        }
+        return true;
+    }
+
+    cout << player->getName() << " is done issuing orders." << endl;
     return false;
 }
 
@@ -307,18 +366,102 @@ std::ostream& BenevolentPlayerStrategy::print(std::ostream& os) const {
 
 //---- AgressivePlayerStrategy -----------------------
 
-vector<Territory*> AggressivePlayerStrategy::toAttack(const Player*){
-    //TODO: implement this
-    return {};
+vector<Territory*> AggressivePlayerStrategy::toAttack(const Player* player){
+    vector<Territory*> attackTargets;
+
+    for (Territory* t : *(player->getTerritoriesOwned())) {
+        for (Territory* adj : *(t->getAdjacentTerritories())) {
+            if (adj->getOwner() != player) {
+                bool alreadyListed = false;
+
+                for (Territory* target : attackTargets) {
+                    if (target == adj) {
+                        alreadyListed = true;
+                        break;
+                    }
+                }
+
+                if (!alreadyListed) {
+                    attackTargets.push_back(adj);
+                }
+            }
+        }
+    }
+
+    sort(attackTargets.begin(), attackTargets.end(), [](Territory* a, Territory* b) {
+        return a->getArmyCount() < b->getArmyCount();
+    });
+
+    return attackTargets;
 }
 
-vector<Territory*> AggressivePlayerStrategy::toDefend(const Player*){
-    //TODO: implement this
-    return {};
+vector<Territory*> AggressivePlayerStrategy::toDefend(const Player* player){
+    vector<Territory*> defend = *(player->getTerritoriesOwned());
+
+    sort(defend.begin(), defend.end(), [](Territory* a, Territory* b) {
+        return a->getArmyCount() < b->getArmyCount();
+    });
+
+    return defend;
 }
 
 bool AggressivePlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
-    //TODO: implement this
+    vector<Territory*> defend = toDefend(player);
+
+    if (player->getReinforcementPool() > 0) {
+        if (!defend.empty()) {
+            Territory* target = defend.back();
+            int armies = player->getReinforcementPool();
+
+            cout << player->getName() << " issues Deploy order: " << armies
+                 << " armies to " << target->getName() << endl;
+
+            player->getOrders()->addOrder(new Deploy(player, target, armies));
+            player->setReinforcementPool(0);
+        }
+        return true;
+    }
+
+    if (!defend.empty()) {
+        Territory* strongest = defend.back();
+        vector<Territory*> attack = toAttack(player);
+
+        for (Territory* target : attack) {
+            if (strongest->isAdjacentTo(target) && strongest->getArmyCount() > 1) {
+                int attackArmies = strongest->getArmyCount() - 1;
+
+                cout << player->getName() << " issues Advance order (attack): "
+                     << strongest->getName() << " -> " << target->getName()
+                     << " (" << attackArmies << " armies)" << endl;
+
+                player->getOrders()->addOrder(new Advance(player, strongest, target, attackArmies));
+                player->incrementOrdersIssuedThisTurn();
+                return true;
+            }
+        }
+    }
+
+    if (player->getOrdersIssuedThisTurn() == 0) {
+        cout << player->getName() << " skips attack-advance (no valid source territory)." << endl;
+        player->incrementOrdersIssuedThisTurn();
+        return true;
+    }
+
+    if (player->getOrdersIssuedThisTurn() >= 1) {
+        player->incrementOrdersIssuedThisTurn();
+
+        vector<Card*>* cards = player->getHand()->getCards();
+        if (!cards->empty() && deck != nullptr) {
+            Card* card = cards->front();
+            cout << player->getName() << " plays card: " << *card << endl;
+            card->play(deck, player->getHand(), allPlayers);
+        } else {
+            cout << player->getName() << " has no cards to play." << endl;
+        }
+        return true;
+    }
+
+    cout << player->getName() << " is done issuing orders." << endl;
     return false;
 }
 
@@ -377,18 +520,99 @@ std::ostream& NeutralPlayerStrategy::print(std::ostream& os) const {
 
 //---- CheaterPlayerStrategy -----------------------
 
-vector<Territory*> CheaterPlayerStrategy::toAttack(const Player*){
-    //TODO: implement this
-    return {};
+vector<Territory*> CheaterPlayerStrategy::toAttack(const Player* player){
+    vector<Territory*> attackTargets;
+
+    for (Territory* t : *(player->getTerritoriesOwned())) {
+        for (Territory* adj : *(t->getAdjacentTerritories())) {
+            if (adj->getOwner() != player) {
+                bool alreadyListed = false;
+
+                for (Territory* target : attackTargets) {
+                    if (target == adj) {
+                        alreadyListed = true;
+                        break;
+                    }
+                }
+
+                if (!alreadyListed) {
+                    attackTargets.push_back(adj);
+                }
+            }
+        }
+    }
+
+    sort(attackTargets.begin(), attackTargets.end(), [](Territory* a, Territory* b) {
+        return a->getArmyCount() < b->getArmyCount();
+    });
+
+    return attackTargets;
 }
 
-vector<Territory*> CheaterPlayerStrategy::toDefend(const Player*){
-    //TODO: implement this
-    return {};
+vector<Territory*> CheaterPlayerStrategy::toDefend(const Player* player){
+    vector<Territory*> defend = *(player->getTerritoriesOwned());
+
+    sort(defend.begin(), defend.end(), [](Territory* a, Territory* b) {
+        return a->getArmyCount() < b->getArmyCount();
+    });
+
+    return defend;
 }
 
 bool CheaterPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
-    //TODO: implement this
+    (void)deck;
+    (void)allPlayers;
+
+    vector<Territory*> defend = toDefend(player);
+
+    if (player->getReinforcementPool() > 0) {
+        if (!defend.empty()) {
+            Territory* target = defend.back();
+            int armies = player->getReinforcementPool();
+
+            cout << player->getName() << " issues Deploy order: " << armies
+                 << " armies to " << target->getName() << endl;
+
+            player->getOrders()->addOrder(new Deploy(player, target, armies));
+            player->setReinforcementPool(0);
+        }
+        return true;
+    }
+
+    if (player->getOrdersIssuedThisTurn() == 0) {
+        player->incrementOrdersIssuedThisTurn();
+
+        vector<Territory*> conquered = toAttack(player);
+
+        if (conquered.empty()) {
+            cout << player->getName() << " has no adjacent enemy territories to conquer." << endl;
+            return false;
+        }
+
+        cout << player->getName() << " automatically conquers adjacent enemy territories:" << endl;
+
+        for (Territory* target : conquered) {
+            Player* previousOwner = target->getOwner();
+
+            if (previousOwner != nullptr) {
+                vector<Territory*>* previousTerritories = previousOwner->getTerritoriesOwned();
+                previousTerritories->erase(
+                    remove(previousTerritories->begin(), previousTerritories->end(), target),
+                    previousTerritories->end()
+                );
+            }
+
+            target->setOwner(player);
+            player->getTerritoriesOwned()->push_back(target);
+            player->setConqueredThisTurn(true);
+
+            cout << "  " << target->getName() << endl;
+        }
+
+        return true;
+    }
+
+    cout << player->getName() << " is done issuing orders." << endl;
     return false;
 }
 
