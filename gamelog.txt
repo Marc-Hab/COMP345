@@ -1,0 +1,96 @@
+Command saved to CommandProcessor: tournament
+Command effect saved: Command validated successfully
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+Command effect saved: 
+Tournament mode:
+M: canada.map
+P: Aggressive, Benevolent
+G: 1
+D: 10
+
+Map        | Game 1
+-----------+-------
+canada.map | Draw  
+
+GameEngine state changed to: Win
+Command effect saved: Transition successful: Start -> Win
+Command saved to CommandProcessor: quit
+GameEngine state changed to: End
+Command effect saved: Game quit by user
+Command saved to CommandProcessor: tournament
+Command effect saved: Command validated successfully
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+GameEngine state changed to: AssignReinforcement
+GameEngine state changed to: IssueOrders
+GameEngine state changed to: ExecuteOrders
+Command effect saved: 
+Tournament mode:
+M: canada.map
+P: Aggressive, Benevolent
+G: 1
+D: 10
+
+Map        | Game 1
+-----------+-------
+canada.map | Draw  
+
+GameEngine state changed to: Win
+Command effect saved: Transition successful: Start -> Win
+Command saved to CommandProcessor: quit
+GameEngine state changed to: End
+Command effect saved: Game quit by user

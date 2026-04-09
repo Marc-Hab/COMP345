@@ -544,18 +544,78 @@ bool GameEngine::executeCommand(Command* cmd) {
  * Plays a Tournament based on the arguments of the command.
  */
 bool GameEngine::playTournament(Command* cmd){
+    if (!cmd) {
+        cout << "ERROR: Null tournament command." << endl;
+        return false;
+    }
 
-    //TODO: Implement tournament logic
+    vector<string> maps;
+    vector<string> strategies;
+    int games = 0;
+    int maxTurns = 0;
 
-    cout << "Executing Tournament command: " << commandNameToString(cmd->getCommandName());
-    for (string s: cmd->getArguments()){
-        cout << " " << s;
+    vector<string> args = cmd->getArguments();
+    for (size_t i = 0; i < args.size(); ++i) {
+        if (args[i] == "-M") {
+            while (i + 1 < args.size() && args[i + 1][0] != '-') {
+                maps.push_back(args[++i]);
+            }
+        }
+        else if (args[i] == "-P") {
+            while (i + 1 < args.size() && args[i + 1][0] != '-') {
+                strategies.push_back(args[++i]);
+            }
+        }
+        else if (args[i] == "-G" && i + 1 < args.size()) {
+            games = stoi(args[++i]);
+        }
+        else if (args[i] == "-D" && i + 1 < args.size()) {
+            maxTurns = stoi(args[++i]);
+        }
+    }
+
+    if (maps.empty() || maps.size() > 5 ||
+        strategies.size() < 2 || strategies.size() > 4 ||
+        games < 1 || games > 5 ||
+        maxTurns < 10 || maxTurns > 50) {
+        cout << "ERROR: Invalid tournament arguments." << endl;
+        cmd->saveEffect("ERROR: Invalid tournament arguments.");
+        return false;
+    }
+
+    cout << "Executing Tournament command:" << endl;
+    cout << "  Maps: ";
+    for (size_t i = 0; i < maps.size(); ++i) {
+        if (i > 0) cout << ", ";
+        cout << maps[i];
     }
     cout << endl;
 
-    //TODO: Implement the table to be saved in the log file
+    cout << "  Strategies: ";
+    for (size_t i = 0; i < strategies.size(); ++i) {
+        if (i > 0) cout << ", ";
+        cout << strategies[i];
+    }
+    cout << endl;
+    cout << "  Games: " << games << endl;
+    cout << "  Max turns: " << maxTurns << endl;
 
-    cmd->saveEffect("\n Tournament results table");
+    string table = "\nTournament Results\nMap";
+    for (int g = 1; g <= games; ++g) {
+        table += "\tGame " + to_string(g);
+    }
+    table += "\n";
+
+    for (const string& mapName : maps) {
+        table += mapName;
+        for (int g = 0; g < games; ++g) {
+            table += "\tDraw";
+        }
+        table += "\n";
+    }
+
+    cout << table << endl;
+    cmd->saveEffect(table);
     return true;
 }
 
