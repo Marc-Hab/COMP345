@@ -407,11 +407,20 @@ static bool validateTournamentArgs(Command* cmd) {
         return false;
     }
 
-    // -M: 1-5 map files
+    // -M: 1-5 map files, no duplicates
     if (maps.empty() || maps.size() > 5) {
         cmd->saveEffect("ERROR: -M requires 1 to 5 map files (got " +
                         to_string(maps.size()) + ")");
         return false;
+    }
+
+    set<string> seenMaps;
+    for (const string& m : maps) {
+        if (seenMaps.count(m)) {
+            cmd->saveEffect("ERROR: duplicate map '" + m + "'");
+            return false;
+        }
+        seenMaps.insert(m);
     }
 
     // -P: 2-4 strategies, valid names only, no duplicates
