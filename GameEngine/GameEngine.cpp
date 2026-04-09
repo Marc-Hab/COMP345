@@ -542,6 +542,7 @@ bool GameEngine::executeCommand(Command* cmd) {
 
 /**
  * Plays a Tournament based on the arguments of the command.
+ * TODO (@Invictus): implement tournament logic here.
  */
 bool GameEngine::playTournament(Command* cmd){
 
