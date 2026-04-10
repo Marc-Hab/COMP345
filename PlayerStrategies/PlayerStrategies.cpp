@@ -343,17 +343,15 @@ std::ostream& AggressivePlayerStrategy::print(std::ostream& os) const {
 //---- NeutralPlayerStrategy -----------------------
 
 vector<Territory*> NeutralPlayerStrategy::toAttack(const Player*){
-    //TODO: implement this
     return {};
 }
 
 vector<Territory*> NeutralPlayerStrategy::toDefend(const Player*){
-    //TODO: implement this
-    return {};
+    return *(player->getTerritoriesOwned());
 }
 
 bool NeutralPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
-    //TODO: implement this
+    cout << player->getName() << " (Neutral) does not issue any orders.\n";
     return false;
 }
 
