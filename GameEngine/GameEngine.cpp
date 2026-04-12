@@ -640,7 +640,7 @@ bool GameEngine::playTournament(Command* cmd) {
     }
 
     // ── 4. Build and output the results table ──────────────────────────────
-    const int MAP_COL  = 8;   // width of "Map N  " column
+    const int MAP_COL  = 23;   // width of "Map N  " column
     const int GAME_COL = 15;  // width of each "Game N" column
 
     ostringstream table;
@@ -659,7 +659,7 @@ bool GameEngine::playTournament(Command* cmd) {
 
     // Data rows
     for (int m = 0; m < M; m++) {
-        table << setw(MAP_COL) << left << ("Map " + to_string(m + 1));
+        table << setw(MAP_COL) << left << ("Map " + to_string(m + 1) + " (" + mapFiles[m] + ")");
         for (int g = 0; g < G; g++)
             table << setw(GAME_COL) << left << results[m][g];
         table << "\n";
