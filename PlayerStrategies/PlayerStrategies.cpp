@@ -646,7 +646,6 @@ vector<Territory*> CheaterPlayerStrategy::toDefend(const Player* player){
 * Order Issuing Strategy: 
 * 1: Deploy all reinforcements into strongest territory.
 * 2: Advance all armies (except 1) of strongest territory to weakest enemy adjacent territory.
-* 3: Play a card.
 */
 bool CheaterPlayerStrategy::issueOrder(Player* player, Deck* deck, const std::vector<Player*>* allPlayers) {
     
