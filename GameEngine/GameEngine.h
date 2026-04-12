@@ -77,6 +77,10 @@ private:
     bool addPlayer(Command* cmd);
     bool gameStart(Command* cmd);
 
+    // Runs one tournament game for up to maxTurns
+    // Returns winner name or "Draw" string
+    std::string playOneGame(int maxTurns);
+
     // Resets game data to start a new game
     void newGame();
 
