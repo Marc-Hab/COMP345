@@ -1,2 +1,0 @@
-tournament -M austria.map canada.map -P Aggressive Benevolent Neutral -G 3 -D 10
-quit

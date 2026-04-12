@@ -475,33 +475,34 @@ bool AggressivePlayerStrategy::issueOrder(Player* player, Deck* deck, const std:
         return true;
     }
 
-    // Advance strongest territory into weakest territory
+    // Advance: every owned territory with armies attacks the weakest adjacent enemy.
+    // Iterating strongest→weakest so the most powerful territories strike first.
     if (player->getOrdersIssuedThisTurn() == 0) {
         player->incrementOrdersIssuedThisTurn();
-        
+
+        vector<Territory*> attack = toAttack(player); // sorted ASC by enemy army count
         bool issued = false;
 
-        if (!defend.empty()) {
-            Territory* strongest = defend.back();
-            vector<Territory*> attack = toAttack(player);
+        for (int i = (int)defend.size() - 1; i >= 0; i--) {
+            Territory* src = defend[i];
+            if (src->getArmyCount() <= 1) continue;
 
+            // Attack the weakest adjacent enemy territory
             for (Territory* target : attack) {
-                if (strongest->isAdjacentTo(target) && strongest->getArmyCount() > 1) {
-                    int attackArmies = strongest->getArmyCount() - 1;
-
+                if (src->isAdjacentTo(target)) {
+                    int attackArmies = src->getArmyCount() - 1;
                     cout << player->getName() << " issues Advance order (attack): "
-                        << strongest->getName() << " -> " << target->getName()
-                        << " (" << attackArmies << " armies)" << endl;
-
-                    player->getOrders()->addOrder(new Advance(player, strongest, target, attackArmies));
+                         << src->getName() << " -> " << target->getName()
+                         << " (" << attackArmies << " armies)" << endl;
+                    player->getOrders()->addOrder(new Advance(player, src, target, attackArmies));
                     issued = true;
                     break;
                 }
             }
         }
 
-        if (!issued){
-            cout << playerName << " skips defend-advance (no adjacent territories to reinforce)." << endl;
+        if (!issued) {
+            cout << playerName << " skips attack (no adjacent territories to attack)." << endl;
         }
         return true;
     }   

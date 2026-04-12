@@ -4,11 +4,13 @@
 #include "../Players/Player.h"
 #include "../Cards/Cards.h"
 #include "../Orders/Orders.h"
+#include "../PlayerStrategies/PlayerStrategies.h"
 #include <cctype>
 #include <sstream>
 #include <algorithm>
 #include <random>
 #include <numeric>
+#include <iomanip>
 #include <sys/types.h>
 #include <dirent.h>
 
@@ -541,23 +543,173 @@ bool GameEngine::executeCommand(Command* cmd) {
 }
 
 /**
- * Plays a Tournament based on the arguments of the command.
- * TODO (@Invictus): implement tournament logic here.
+ * Plays a full tournament:
+ *   > P strategies play G games per each map M
+ *   > A game ends when one player conquers all territories (win) or D turns 
+ *     have elapsed (draw)
+ *   > Prints the results table to the console and saves it to the log via cmd->saveEffect
  */
-bool GameEngine::playTournament(Command* cmd){
-
-    //TODO: Implement tournament logic
-
-    cout << "Executing Tournament command: " << commandNameToString(cmd->getCommandName());
-    for (string s: cmd->getArguments()){
-        cout << " " << s;
+bool GameEngine::playTournament(Command* cmd) {
+    // ── 1. Parse arguments (already validated by CommandProcessor) ───────────
+    vector<string> args = cmd->getArguments();
+    vector<string> mapFiles, strategyNames;
+    int numGames = 0, maxTurns = 0;
+    string section;
+    for (const string& arg : args) {
+        if      (arg == "-M" || arg == "-m") section = "M";
+        else if (arg == "-P" || arg == "-p") section = "P";
+        else if (arg == "-G" || arg == "-g") section = "G";
+        else if (arg == "-D" || arg == "-d") section = "D";
+        else if (section == "M") mapFiles.push_back(arg);
+        else if (section == "P") strategyNames.push_back(arg);
+        else if (section == "G") { try { numGames = stoi(arg); } catch (...) {} }
+        else if (section == "D") { try { maxTurns = stoi(arg); } catch (...) {} }
     }
-    cout << endl;
 
-    //TODO: Implement the table to be saved in the log file
+    int M = (int)mapFiles.size();
+    int G = numGames;
 
-    cmd->saveEffect("\n Tournament results table");
+    // results[mapIdx][gameIdx] = winner name or "Draw"
+    vector<vector<string>> results(M, vector<string>(G, "Draw"));
+
+    // ── 2. Print tournament header ─────────────────────────────────────────
+    cout << "\n========================================\n";
+    cout << "           TOURNAMENT MODE\n";
+    cout << "========================================\n";
+    cout << "Maps      : ";
+    for (int i = 0; i < M; i++) { if (i) cout << ", "; cout << mapFiles[i]; }
+    cout << "\nStrategies: ";
+    for (int i = 0; i < (int)strategyNames.size(); i++) { if (i) cout << ", "; cout << strategyNames[i]; }
+    cout << "\nGames/map : " << G
+         << "\nMax turns : " << maxTurns << "\n";
+
+    // ── 3. Play every game on every map ────────────────────────────────────
+    for (int m = 0; m < M; m++) {
+        cout << "\n\n========== MAP " << (m + 1) << ": " << mapFiles[m] << " ==========\n";
+
+        for (int g = 0; g < G; g++) {
+            cout << "\n--- Map " << (m + 1) << ", Game " << (g + 1)
+                 << " / " << G << " ---\n";
+
+            // Reset all game data (clears players, old map, refreshes deck)
+            newGame();
+
+            // Reload the map fresh from file for each game so that territory
+            // adjacency pointers are valid within the new Map object.
+            gameMap = MapLoader::getInstance().loadMap(mapFiles[m]);
+            if (!gameMap)
+                gameMap = MapLoader::getInstance().loadMap("../Maps/map files/" + mapFiles[m]);
+
+            if (!gameMap || !gameMap->validate()) {
+                cout << "ERROR: could not load/validate '" << mapFiles[m]
+                     << "' — game recorded as Draw.\n";
+                delete gameMap;
+                gameMap = nullptr;
+                continue; // results[m][g] stays "Draw"
+            }
+
+            // Create one player per strategy
+            for (const string& stratName : strategyNames) {
+                string lower = stratName;
+                transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+                Player* p = new Player(stratName);
+                p->getHand()->setPlayer(p);
+
+                PlayerStrategy* strat = nullptr;
+                if      (lower == "aggressive") strat = new AggressivePlayerStrategy();
+                else if (lower == "benevolent") strat = new BenevolentPlayerStrategy();
+                else if (lower == "neutral")    strat = new NeutralPlayerStrategy();
+                else if (lower == "cheater")    strat = new CheaterPlayerStrategy();
+                if (strat) p->setStrategy(strat);
+
+                players->push_back(p);
+            }
+
+            // Distribute territories, randomise order, give armies, draw cards
+            Command fakeStart(CommandName::GameStart);
+            if (!gameStart(&fakeStart)) {
+                cout << "ERROR: gameStart failed — game recorded as Draw.\n";
+                continue;
+            }
+
+            // Run game with a turn limit
+            results[m][g] = playOneGame(maxTurns);
+            cout << "\n  >> Result: " << results[m][g] << "\n";
+        }
+    }
+
+    // ── 4. Build and output the results table ──────────────────────────────
+    const int MAP_COL  = 8;   // width of "Map N  " column
+    const int GAME_COL = 15;  // width of each "Game N" column
+
+    ostringstream table;
+    table << "\nTournament mode:\n";
+    table << "M: ";
+    for (int i = 0; i < M; i++) { if (i) table << ", "; table << mapFiles[i]; }
+    table << "\nP: ";
+    for (int i = 0; i < (int)strategyNames.size(); i++) { if (i) table << ", "; table << strategyNames[i]; }
+    table << "\nG: " << G << "\nD: " << maxTurns << "\n\nResults:\n";
+
+    // Header row
+    table << setw(MAP_COL) << left << "";
+    for (int g = 0; g < G; g++)
+        table << setw(GAME_COL) << left << ("Game " + to_string(g + 1));
+    table << "\n";
+
+    // Data rows
+    for (int m = 0; m < M; m++) {
+        table << setw(MAP_COL) << left << ("Map " + to_string(m + 1));
+        for (int g = 0; g < G; g++)
+            table << setw(GAME_COL) << left << results[m][g];
+        table << "\n";
+    }
+
+    string tableStr = table.str();
+    cout << "\n" << tableStr;
+    cmd->saveEffect(tableStr);  // logged to gamelog.txt via LogObserver
+
     return true;
+}
+
+/**
+ * Runs one game for up to maxTurns rounds.
+ * Returns the winning player's name, or "Draw" if the turn limit is reached.
+ * Assumes players and gameMap are already set up (call gameStart first).
+ */
+string GameEngine::playOneGame(int maxTurns) {
+    for (int turn = 1; turn <= maxTurns; turn++) {
+        cout << "\n----- Turn " << turn << " / " << maxTurns << " -----\n";
+
+        reinforcementPhase();
+        issueOrdersPhase();
+        executeOrdersPhase();
+
+        // Eliminate players with no territories
+        auto it = players->begin();
+        while (it != players->end()) {
+            if ((*it)->getTerritoriesOwned()->empty()) {
+                cout << "\n*** " << (*it)->getName()
+                     << " is eliminated! ***\n";
+                delete *it;
+                it = players->erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        if (players->empty()) return "Draw";
+        if (players->size() == 1) return (*players)[0]->getName();
+
+        // Check if any player owns all territories
+        int totalTerr = static_cast<int>(gameMap->getTerritories()->size());
+        for (Player* p : *players) {
+            if ((int)p->getTerritoriesOwned()->size() == totalTerr)
+                return p->getName();
+        }
+    }
+
+    return "Draw"; // max turns reached without a winner
 }
 
 /**

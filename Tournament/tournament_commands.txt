@@ -1,0 +1,2 @@
+tournament -M qatar.map france.map germany.map haiti.map -P Aggressive Neutral -G 3 -D 50
+quit
