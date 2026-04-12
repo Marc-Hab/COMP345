@@ -216,6 +216,7 @@ void Advance::execute() {
             if (prev != nullptr) {
                 auto& prevList = *prev->getTerritoriesOwned();
                 prevList.erase(remove(prevList.begin(), prevList.end(), target), prevList.end());
+                prev->isAttacked();
             }
             target->setOwner(issuer);
             target->setArmyCount(survivingAttackers);

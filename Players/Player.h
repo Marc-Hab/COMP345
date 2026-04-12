@@ -42,6 +42,9 @@ public:
     void resetOrderIssuingState(); // resets the data before the start of each turn
     void incrementOrdersIssuedThisTurn(){(*ordersIssuedThisTurn)++;};
 
+    // Switches the neutral strategy to an aggressive one
+    void isAttacked();
+
     // Getters
     std::string getName() const;
     OrdersList* getOrders() const;

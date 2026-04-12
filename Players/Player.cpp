@@ -154,6 +154,21 @@ void Player::setConqueredThisTurn(bool val) {
 }
 
 /*
+* Switches neutral strategy to aggressive one
+*/
+void Player::isAttacked(){
+    
+    if (this->strategy == nullptr) {return;}
+
+    bool isNeutralPlayer = dynamic_cast<NeutralPlayerStrategy*>(this->strategy) != nullptr;
+
+    if (isNeutralPlayer) {
+        delete this->strategy;
+        this->strategy = new AggressivePlayerStrategy();
+    }
+}
+
+/*
 * Sets a new strategy for the player
 */
 void Player::setStrategy(PlayerStrategy* strategy) {
