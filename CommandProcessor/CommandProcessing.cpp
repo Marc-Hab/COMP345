@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -373,6 +374,100 @@ Command* CommandProcessor::getCommand() {
 
 //------ Helper methods -------------------------------------
 
+// Validates tournament command arguments.
+// Format: tournament -M <maps...> -P <strategies...> -G <numGames> -D <maxTurns>
+static bool validateTournamentArgs(Command* cmd) {
+    vector<string> args = cmd->getArguments();
+
+    vector<string> maps, strategies;
+    int numGames = -1, maxTurns = -1;
+    bool hasM = false, hasP = false, hasG = false, hasD = false;
+
+    // parse each flag section
+    string section;
+    for (const string& arg : args) {
+        if      (arg == "-M" || arg == "-m") { section = "M"; hasM = true; }
+        else if (arg == "-P" || arg == "-p") { section = "P"; hasP = true; }
+        else if (arg == "-G" || arg == "-g") { section = "G"; hasG = true; }
+        else if (arg == "-D" || arg == "-d") { section = "D"; hasD = true; }
+        else if (section == "M") { maps.push_back(arg); }
+        else if (section == "P") { strategies.push_back(arg); }
+        else if (section == "G") {
+            try { numGames = stoi(arg); } catch (...) { numGames = -1; }
+        }
+        else if (section == "D") {
+            try { maxTurns = stoi(arg); } catch (...) { maxTurns = -1; }
+        }
+    }
+
+    if (!hasM || !hasP || !hasG || !hasD) {
+        cmd->saveEffect(
+            "ERROR: tournament requires all four flags: -M, -P, -G, -D. "
+            "Usage: tournament -M <maps> -P <strategies> -G <numGames> -D <maxTurns>");
+        return false;
+    }
+
+    // -M: 1-5 map files, no duplicates
+    if (maps.empty() || maps.size() > 5) {
+        cmd->saveEffect("ERROR: -M requires 1 to 5 map files (got " +
+                        to_string(maps.size()) + ")");
+        return false;
+    }
+
+    set<string> seenMaps;
+    for (const string& m : maps) {
+        if (seenMaps.count(m)) {
+            cmd->saveEffect("ERROR: duplicate map '" + m + "'");
+            return false;
+        }
+        seenMaps.insert(m);
+    }
+
+    // -P: 2-4 strategies, valid names only, no duplicates
+    const vector<string> validStrats = {"aggressive", "benevolent", "neutral", "cheater"};
+    if (strategies.size() < 2 || strategies.size() > 4) {
+        cmd->saveEffect(
+            "ERROR: -P requires 2 to 4 player strategies (got " +
+            to_string(strategies.size()) +
+            "). Valid: Aggressive, Benevolent, Neutral, Cheater");
+        return false;
+    }
+
+    set<string> seen;
+    for (const string& s : strategies) {
+        string lower = s;
+        transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+        if (find(validStrats.begin(), validStrats.end(), lower) == validStrats.end()) {
+            cmd->saveEffect(
+                "ERROR: '" + s + "' is not a valid computer strategy. "
+                "Valid: Aggressive, Benevolent, Neutral, Cheater");
+            return false;
+        }
+        if (seen.count(lower)) {
+            cmd->saveEffect("ERROR: duplicate strategy '" + s + "'");
+            return false;
+        }
+        seen.insert(lower);
+    }
+
+    // -G: 1-5 games per map
+    if (numGames < 1 || numGames > 5) {
+        cmd->saveEffect("ERROR: -G requires 1 to 5 games per map (got " +
+                        (numGames == -1 ? string("non-integer") : to_string(numGames)) + ")");
+        return false;
+    }
+
+    // -D: 10-50 max turns per game
+    if (maxTurns < 10 || maxTurns > 50) {
+        cmd->saveEffect("ERROR: -D requires 10 to 50 max turns per game (got " +
+                        (maxTurns == -1 ? string("non-integer") : to_string(maxTurns)) + ")");
+        return false;
+    }
+
+    return true;
+}
+
 static bool commandWellFormed(Command* cmd){
     
     if (!cmd) {
@@ -384,9 +479,7 @@ static bool commandWellFormed(Command* cmd){
     
     switch (cmdName) {
         case CommandName::Tournament:
-            // TODO: implement tournament command validation (refactor into a new method because complicated)
-            cout << "Tournament Command is well formed" << endl;
-            return true;
+            return validateTournamentArgs(cmd);
         case CommandName::LoadMap:
             if (args.size() != 1) {
                 cmd->saveEffect("ERROR: 'loadmap' requires exactly 1 argument (map filename). Usage: loadmap <filename>");
