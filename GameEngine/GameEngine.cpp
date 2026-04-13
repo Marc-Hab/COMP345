@@ -698,7 +698,6 @@ string GameEngine::playOneGame(int maxTurns) {
             }
         }
 
-        if (players->empty()) return "Draw";
         if (players->size() == 1) return (*players)[0]->getName();
     }
 
