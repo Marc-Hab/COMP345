@@ -700,13 +700,6 @@ string GameEngine::playOneGame(int maxTurns) {
 
         if (players->empty()) return "Draw";
         if (players->size() == 1) return (*players)[0]->getName();
-
-        // Check if any player owns all territories
-        int totalTerr = static_cast<int>(gameMap->getTerritories()->size());
-        for (Player* p : *players) {
-            if ((int)p->getTerritoriesOwned()->size() == totalTerr)
-                return p->getName();
-        }
     }
 
     return "Draw"; // max turns reached without a winner
